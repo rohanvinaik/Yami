@@ -137,14 +137,22 @@ class NeuralDecider:
             _TEMPO_MAP.get(profile.tempo, 1),
         ]], dtype=torch.long, device=dev)
 
-        # Board-level continuous features
+        # Board-level continuous features + nav_vector
         total_mat = sum(
             PIECE_VALUES.get(pc.piece_type, 0) for pc in board.piece_map().values()
         )
+        from yami.navigator import compute_navigation_vector
+        nav = compute_navigation_vector(board)
         profile_cont = torch.tensor([[
             total_mat / _MAX_MATERIAL,
             total_mat / _MAX_MATERIAL,
             min(board.fullmove_number, 100) / 100.0,
+            float(nav.aggression),
+            float(nav.piece_domain),
+            float(nav.complexity),
+            float(nav.initiative),
+            float(nav.king_pressure),
+            float(nav.phase),
         ]], dtype=torch.float32, device=dev)
 
         plan_type = torch.tensor(

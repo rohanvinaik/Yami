@@ -32,9 +32,11 @@ def example_to_tensors(ex: ChessExample) -> dict[str, torch.Tensor]:
         dtype=torch.long,
     )
 
-    # Profile continuous: [3] float
+    # Profile continuous: [3] float + [6] nav_vector = [9] float
+    nav = ex.nav_vector if ex.nav_vector else [0, 0, 0, 0, 0, 0]
     profile_continuous = torch.tensor(
-        [ex.game_phase, ex.total_material, ex.move_number],
+        [ex.game_phase, ex.total_material, ex.move_number]
+        + [float(v) for v in nav],
         dtype=torch.float32,
     )
 

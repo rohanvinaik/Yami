@@ -6,7 +6,7 @@ Each training example captures: position features + annotated candidates + Stock
 from __future__ import annotations
 
 import json
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from pathlib import Path
 
 # Tactical motif vocabulary (fixed order for one-hot encoding)
@@ -71,6 +71,8 @@ class ChessExample:
     game_phase: float = 0.0  # 1.0=opening, 0.0=endgame
     total_material: float = 0.0  # normalized
     move_number: float = 0.0  # normalized
+    # Navigation vector (v3 - Wayfinder)
+    nav_vector: list[int] = field(default_factory=lambda: [0, 0, 0, 0, 0, 0])
     # Near-miss metadata
     second_best_idx: int = -1
     eval_gap_cp: int = 0

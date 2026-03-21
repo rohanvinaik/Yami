@@ -55,7 +55,7 @@ class ChessPositionEncoder(nn.Module):
         output_dim: int = 384,
         candidate_dim: int = 48,
         embed_dim: int = 8,
-        profile_continuous_dim: int = 3,
+        profile_continuous_dim: int = 9,  # 3 board features + 6 nav_vector
         candidate_input_dim: int = CANDIDATE_FEAT_DIM,
     ) -> None:
         super().__init__()
@@ -133,7 +133,8 @@ class ChessPositionEncoder(nn.Module):
             profile_cat = torch.cat([profile_cat, profile_continuous], dim=-1)
         else:
             # Pad with zeros if not provided (backward compat)
-            zeros = torch.zeros(profile_cat.shape[0], 3, device=profile_cat.device)
+            pad_dim = self.profile_proj[0].in_features - profile_cat.shape[-1]
+            zeros = torch.zeros(profile_cat.shape[0], pad_dim, device=profile_cat.device)
             profile_cat = torch.cat([profile_cat, zeros], dim=-1)
 
         profile_enc = self.profile_proj(profile_cat)

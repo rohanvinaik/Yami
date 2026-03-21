@@ -91,6 +91,10 @@ class YamiEngine:
         self.max_candidates = max_candidates
         self.state = GameState()
 
+        # Learned censors (negative learning)
+        from yami.negative_learning import create_default_censors
+        self._learned_censors = create_default_censors()
+
         # Neural model
         self._neural_decider = None
         if use_neural and neural_checkpoint:
@@ -179,6 +183,11 @@ class YamiEngine:
         nav_vector = None
         if self.use_navigator:
             nav_vector = compute_navigation_vector(board)
+
+            # Apply learned censors (negative learning)
+            censored = self._learned_censors.filter_moves(
+                board, censored, nav_vector
+            )
 
             # Get temporal plan bias
             plan_bias = {}

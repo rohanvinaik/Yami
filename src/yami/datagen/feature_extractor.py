@@ -24,6 +24,7 @@ from yami.models import (
     Structure,
     Tempo,
 )
+from yami.navigator import compute_navigation_vector
 from yami.tactical_scoper import (
     PIECE_VALUES,
     apply_blunder_censor,
@@ -218,6 +219,7 @@ def board_to_example(
     """Convert a board + oracle label into a full training example."""
     cand_features, profile, plan_idx = extract_features(board)
     board_feats = _compute_board_features(board)
+    nav = compute_navigation_vector(board)
 
     return ChessExample(
         fen=board.fen(),
@@ -234,6 +236,7 @@ def board_to_example(
         game_phase=board_feats["game_phase"],
         total_material=board_feats["total_material"],
         move_number=board_feats["move_number"],
+        nav_vector=list(nav.as_tuple()),
         best_candidate_idx=best_idx,
         oracle_eval_cp=oracle_eval_cp,
         second_best_idx=second_best_idx,
