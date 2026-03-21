@@ -124,12 +124,25 @@ class YamiTrainer:
                 self.metrics.train_losses.append(loss_dict["total"].item())
                 self.metrics.candidate_accuracies.append(acc)
 
-                # Checkpoint
+                # Checkpoint + logging
                 if step > 0 and step % self.config.checkpoint_interval == 0:
+                    avg_loss = (
+                        sum(self.metrics.train_losses[-self.config.checkpoint_interval:])
+                        / self.config.checkpoint_interval
+                    )
+                    avg_acc = (
+                        sum(self.metrics.candidate_accuracies[-self.config.checkpoint_interval:])
+                        / self.config.checkpoint_interval
+                    )
+                    log = f"  step {step:>5} | loss={avg_loss:.3f} | acc={avg_acc:.3f}"
+
                     if eval_loader:
                         eval_loss, eval_acc = self._evaluate(eval_loader)
                         self.metrics.eval_losses.append(eval_loss)
                         self.metrics.eval_accuracies.append(eval_acc)
+                        log += f" | eval_acc={eval_acc:.3f}"
+
+                    print(log)
 
                     if checkpoint_dir:
                         self._save_checkpoint(
