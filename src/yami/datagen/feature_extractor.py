@@ -221,6 +221,31 @@ def board_to_example(
     board_feats = _compute_board_features(board)
     nav = compute_navigation_vector(board)
 
+    # Compute holographic coherence features
+    gm_freq = 0.0
+    som_conv = 0.0
+    interference = 0.0
+    try:
+        from yami.coherence import compute_coherence
+        real_moves = [c for c in cand_features if c.move_uci != "0000"]
+        if len(real_moves) >= 2:
+            import contextlib
+
+            import chess as _chess
+            move_objs = []
+            for c in real_moves[:5]:
+                with contextlib.suppress(ValueError, _chess.InvalidMoveError):
+                    move_objs.append(_chess.Move.from_uci(c.move_uci))
+            if move_objs:
+                cr = compute_coherence(board, move_objs, nav)
+                if cr.scored_moves:
+                    top = cr.scored_moves[0]
+                    gm_freq = top.gm_frequency
+                    som_conv = top.temporal_convergence
+                    interference = top.interference
+    except Exception:
+        pass  # graceful degradation if coherence unavailable
+
     return ChessExample(
         fen=board.fen(),
         material=profile["material"],
@@ -237,6 +262,9 @@ def board_to_example(
         total_material=board_feats["total_material"],
         move_number=board_feats["move_number"],
         nav_vector=list(nav.as_tuple()),
+        gm_top_move_freq=gm_freq,
+        som_convergence=som_conv,
+        interference_score=interference,
         best_candidate_idx=best_idx,
         oracle_eval_cp=oracle_eval_cp,
         second_best_idx=second_best_idx,

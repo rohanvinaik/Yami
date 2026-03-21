@@ -73,6 +73,10 @@ class ChessExample:
     move_number: float = 0.0  # normalized
     # Navigation vector (v3 - Wayfinder)
     nav_vector: list[int] = field(default_factory=lambda: [0, 0, 0, 0, 0, 0])
+    # Holographic coherence features (v4)
+    gm_top_move_freq: float = 0.0  # GM frequency for infrastructure's top candidate
+    som_convergence: float = 0.0  # SoM agent convergence score
+    interference_score: float = 0.0  # holographic interference pattern
     # Near-miss metadata
     second_best_idx: int = -1
     eval_gap_cp: int = 0

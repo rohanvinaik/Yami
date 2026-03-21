@@ -32,11 +32,16 @@ def example_to_tensors(ex: ChessExample) -> dict[str, torch.Tensor]:
         dtype=torch.long,
     )
 
-    # Profile continuous: [3] float + [6] nav_vector = [9] float
+    # Profile continuous: [3] board + [6] nav + [3] holographic = [12] float
     nav = ex.nav_vector if ex.nav_vector else [0, 0, 0, 0, 0, 0]
     profile_continuous = torch.tensor(
         [ex.game_phase, ex.total_material, ex.move_number]
-        + [float(v) for v in nav],
+        + [float(v) for v in nav]
+        + [
+            getattr(ex, "gm_top_move_freq", 0.0),
+            getattr(ex, "som_convergence", 0.0),
+            getattr(ex, "interference_score", 0.0),
+        ],
         dtype=torch.float32,
     )
 

@@ -153,6 +153,9 @@ class NeuralDecider:
             float(nav.initiative),
             float(nav.king_pressure),
             float(nav.phase),
+            0.0,  # gm_top_move_freq (computed at data gen, not inference)
+            0.0,  # som_convergence
+            0.0,  # interference_score
         ]], dtype=torch.float32, device=dev)
 
         plan_type = torch.tensor(

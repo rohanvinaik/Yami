@@ -55,7 +55,7 @@ class ChessPositionEncoder(nn.Module):
         output_dim: int = 384,
         candidate_dim: int = 48,
         embed_dim: int = 8,
-        profile_continuous_dim: int = 9,  # 3 board features + 6 nav_vector
+        profile_continuous_dim: int = 12,  # 3 board + 6 nav + 3 holographic
         candidate_input_dim: int = CANDIDATE_FEAT_DIM,
     ) -> None:
         super().__init__()

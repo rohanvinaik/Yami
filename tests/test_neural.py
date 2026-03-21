@@ -48,7 +48,7 @@ def test_chess_position_encoder_shape():
     enc = ChessPositionEncoder(output_dim=384, candidate_dim=48, embed_dim=8)
     batch = 4
     profile = torch.randint(0, 3, (batch, 6))
-    profile_cont = torch.randn(batch, 9)
+    profile_cont = torch.randn(batch, 12)
     plan_type = torch.randint(0, 7, (batch,))
     plan_act = torch.randn(batch, 1)
     cand_feats = torch.randn(batch, 5, CANDIDATE_FEAT_DIM)
@@ -93,7 +93,7 @@ def test_encoder_masked_candidates_differ():
     enc = ChessPositionEncoder(output_dim=384)
     batch = 2
     profile = torch.randint(0, 3, (batch, 6))
-    profile_cont = torch.randn(batch, 9)
+    profile_cont = torch.randn(batch, 12)
     plan_type = torch.randint(0, 7, (batch,))
     plan_act = torch.randn(batch, 1)
     cand_feats = torch.randn(batch, 5, CANDIDATE_FEAT_DIM)
@@ -202,7 +202,7 @@ def test_full_pipeline_forward():
 
     batch = 2
     profile = torch.randint(0, 3, (batch, 6))
-    profile_cont = torch.randn(batch, 9)
+    profile_cont = torch.randn(batch, 12)
     plan_type = torch.randint(0, 7, (batch,))
     plan_act = torch.randn(batch, 1)
     cand_feats = torch.randn(batch, 5, CANDIDATE_FEAT_DIM)
