@@ -1,0 +1,84 @@
+{
+  "A": {
+    "variant": "A",
+    "params": 293685,
+    "steps": 499,
+    "time_s": 5.6,
+    "final_train_acc": 0.9617,
+    "final_eval_acc": 0.22,
+    "best_eval_acc": 0.26,
+    "final_loss": -0.1776,
+    "checkpoint": "results/smoke/phase0_A/final.pt",
+    "eval_vs_sf": {
+      "wins": 0,
+      "losses": 6,
+      "draws": 0,
+      "avg_moves": 60.8,
+      "win_rate": 0.0,
+      "sf_depth": 2
+    }
+  },
+  "B": {
+    "variant": "B",
+    "params": 980789,
+    "steps": 499,
+    "time_s": 7.4,
+    "final_train_acc": 0.9594,
+    "final_eval_acc": 0.2,
+    "best_eval_acc": 0.26,
+    "final_loss": -0.1465,
+    "checkpoint": "results/smoke/phase0_B/final.pt",
+    "eval_vs_sf": {
+      "wins": 0,
+      "losses": 6,
+      "draws": 0,
+      "avg_moves": 52.8,
+      "win_rate": 0.0,
+      "sf_depth": 2
+    }
+  },
+  "C": {
+    "variant": "C",
+    "params": 293685,
+    "steps": 499,
+    "time_s": 6.4,
+    "final_train_acc": 0.9281,
+    "final_eval_acc": 0.24,
+    "best_eval_acc": 0.28,
+    "final_loss": 0.4822,
+    "checkpoint": "results/smoke/phase0_C/final.pt",
+    "eval_vs_sf": {
+      "wins": 0,
+      "losses": 6,
+      "draws": 0,
+      "avg_moves": 96.5,
+      "win_rate": 0.0,
+      "sf_depth": 2
+    }
+  },
+  "E": {
+    "variant": "E",
+    "params": 272481,
+    "steps": 499,
+    "time_s": 7.2,
+    "final_train_acc": 0.5734,
+    "final_eval_acc": 0.34,
+    "best_eval_acc": 0.34,
+    "final_loss": 0.7598,
+    "checkpoint": "results/smoke/phase0_E/final.pt",
+    "eval_vs_sf": {
+      "wins": 0,
+      "losses": 6,
+      "draws": 0,
+      "avg_moves": 43.2,
+      "win_rate": 0.0,
+      "sf_depth": 2
+    }
+  },
+  "infrastructure": {
+    "wins": 0,
+    "losses": 6,
+    "draws": 0,
+    "avg_moves": 43.2
+  }
+}
