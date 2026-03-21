@@ -277,17 +277,16 @@ def _to_ternary(value: float, threshold: float) -> int:
 
 
 def _compute_look_ahead(board: chess.Board, move: chess.Move) -> float:
-    """2-ply look-ahead: evaluate position quality after opponent responds.
+    """2-ply look-ahead: focused on avoiding critical blunders only.
 
-    Push our move, then check:
-    1. Does opponent have immediate forcing responses (checks, captures)?
-    2. How many legal moves do we have after opponent's best response?
-    3. Are we losing material?
+    Only penalizes moves where the opponent can deliver checkmate or
+    where we lose the ability to move. Does NOT penalize general
+    captures/checks — those aren't blunders, they're normal chess.
 
-    Returns positive score for moves that lead to good positions,
-    negative for moves that walk into trouble.
+    Returns positive for checkmates we deliver, negative for mate threats.
     """
-    score = 0.0
+    if move not in board.legal_moves:
+        return -10.0  # illegal move — heavy penalty
 
     board.push(move)
     try:
@@ -295,69 +294,28 @@ def _compute_look_ahead(board: chess.Board, move: chess.Move) -> float:
             return 10.0  # we delivered checkmate
 
         if board.is_stalemate():
-            return -2.0  # stalemate is bad if we're winning
+            return -1.0
 
-        # Count opponent's forcing responses
-        opp_checks = 0
-        opp_captures = 0
-        opp_threats = 0
-
-        for opp_move in board.legal_moves:
-            if board.is_capture(opp_move):
-                opp_captures += 1
-            board.push(opp_move)
-            if board.is_check():
-                opp_checks += 1
-            if board.is_checkmate():
-                opp_threats += 5  # opponent can mate us
-            board.pop()
-
-            # Limit search for speed
-            if opp_checks + opp_captures > 10:
-                break
-
-        # Penalize moves that give opponent many forcing responses
-        if opp_threats > 0:
-            score -= 5.0  # opponent can mate — very bad
-        if opp_checks >= 3:
-            score -= 2.0  # many checks available for opponent
-        if opp_captures >= 5:
-            score -= 1.0  # lots of captures = tactical chaos (risky)
-
-        # Reward moves that restrict opponent
-        opp_mobility = board.legal_moves.count()
-        if opp_mobility < 10:
-            score += 1.5  # opponent is cramped
-        elif opp_mobility > 35:
-            score -= 0.5  # opponent has too much freedom
-
-        # Check if we're still okay after opponent's "best" response
-        # Simple heuristic: opponent plays first capture or check
-        best_opp = None
+        # ONLY check for mate threats — the critical blunder
         for opp_move in board.legal_moves:
             board.push(opp_move)
             if board.is_checkmate():
                 board.pop()
-                score -= 8.0  # opponent can mate after our move
-                return score
+                board.pop()
+                return -8.0  # opponent can mate after our move
             board.pop()
-            if best_opp is None and board.is_capture(opp_move):
-                best_opp = opp_move
 
-        # After opponent's likely response, how many moves do we have?
-        if best_opp:
-            board.push(best_opp)
-            our_response_count = board.legal_moves.count()
-            if our_response_count == 0:
-                score -= 3.0  # we're stuck after opponent responds
-            elif our_response_count > 20:
-                score += 0.5  # we have options
-            board.pop()
+        # Reward moves that restrict opponent mobility
+        opp_mobility = board.legal_moves.count()
+        if opp_mobility < 8:
+            return 2.0  # opponent is very cramped — good
+        if opp_mobility < 15:
+            return 0.5
+
+        return 0.0  # neutral — no blunders, no special advantage
 
     finally:
         board.pop()
-
-    return score
 
 
 def _normalize_signals(results: list[MoveSignals]) -> None:
