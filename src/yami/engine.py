@@ -76,7 +76,9 @@ class YamiEngine:
         use_navigator: bool = True,
         use_klines: bool = False,
         use_temporal: bool = True,
+        use_gm_patterns: bool = True,
         kline_db_path: str | None = None,
+        gm_db_path: str | None = None,
         max_candidates: int = 5,
     ):
         self.use_llm = use_llm
@@ -109,6 +111,12 @@ class YamiEngine:
         self._klines = None
         if use_klines and kline_db_path:
             self._klines = KLineMemory(kline_db_path)
+
+        # GM pattern database
+        self._gm_db = None
+        if use_gm_patterns:
+            from yami.gm_patterns import GMPatternDB
+            self._gm_db = GMPatternDB(gm_db_path)
 
     def reset(self) -> None:
         """Reset the engine for a new game."""
@@ -196,6 +204,7 @@ class YamiEngine:
                 nav_vector,
                 temporal=self._temporal,
                 klines=self._klines,
+                gm_db=self._gm_db,
             )
 
             # Reorder censored moves by coherence-weighted final score
