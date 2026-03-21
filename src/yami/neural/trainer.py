@@ -250,15 +250,23 @@ class YamiTrainer:
         for batch in loader:
             batch = {k: v.to(self.device) for k, v in batch.items()}
 
-            enc = self.encoder(
-                batch["profile"],
-                batch["plan_type"],
-                batch["plan_activation"],
-                batch["candidate_features"],
-                batch["candidate_mask"],
+            enc_args = dict(
+                profile=batch["profile"],
+                plan_type=batch["plan_type"],
+                plan_activation=batch["plan_activation"],
+                candidate_features=batch["candidate_features"],
+                candidate_mask=batch["candidate_mask"],
+                profile_continuous=batch.get("profile_continuous"),
             )
-            bridge_out = self.bridge(enc)
-            outputs = self.decoder(bridge_out, batch["candidate_mask"])
+            if self.use_attention:
+                enc_args["return_candidate_encodings"] = True
+                enc_out, cand_encs = self.encoder(**enc_args)
+                bridge_out = self.bridge(enc_out)
+                outputs = self.decoder(bridge_out, cand_encs, batch["candidate_mask"])
+            else:
+                enc_out = self.encoder(**enc_args)
+                bridge_out = self.bridge(enc_out)
+                outputs = self.decoder(bridge_out, batch["candidate_mask"])
 
             loss_dict = self.loss_fn(
                 outputs["candidate_logits"],

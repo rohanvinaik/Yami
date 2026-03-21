@@ -94,7 +94,8 @@ def evaluate_model(
 
     engine = YamiEngine(
         use_llm=False, use_neural=True,
-        neural_checkpoint=str(ckpt), use_opening_book=True,
+        neural_checkpoint=str(ckpt), neural_config=config,
+        use_opening_book=True,
     )
 
     oracle = StockfishOracle(depth=sf_depth, time_limit=0.05)

@@ -58,6 +58,7 @@ class YamiEngine:
         use_llm: bool = True,
         use_neural: bool = False,
         neural_checkpoint: str | None = None,
+        neural_config: object | None = None,
         use_opening_book: bool = True,
         use_endgame_tables: bool = True,
         use_censors: bool = True,
@@ -73,7 +74,9 @@ class YamiEngine:
         self._neural_decider = None
         if use_neural and neural_checkpoint:
             from yami.neural.inference import NeuralDecider
-            self._neural_decider = NeuralDecider(neural_checkpoint)
+            self._neural_decider = NeuralDecider(
+                neural_checkpoint, config=neural_config
+            )
 
     def reset(self) -> None:
         """Reset the engine for a new game."""

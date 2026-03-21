@@ -53,13 +53,23 @@ class NeuralDecider:
             input_dim=self.config.encoder_output_dim,
             bridge_dim=self.config.bridge_dim,
         )
-        self.decoder = ChessTernaryDecoder(
-            input_dim=self.config.bridge_dim,
-            hidden_dim=self.config.decoder_hidden_dim,
-            num_layers=self.config.decoder_num_layers,
-            ternary_enabled=self.config.ternary_enabled,
-            partial_ternary=self.config.partial_ternary,
-        )
+        self.use_attention = self.config.variant == "E"
+        if self.use_attention:
+            from yami.neural.attention_decoder import AttentionCandidateDecoder
+            self.decoder = AttentionCandidateDecoder(
+                bridge_dim=self.config.bridge_dim,
+                candidate_dim=self.config.candidate_dim,
+                num_heads=self.config.attention_heads,
+                hidden_dim=self.config.decoder_hidden_dim,
+            )
+        else:
+            self.decoder = ChessTernaryDecoder(
+                input_dim=self.config.bridge_dim,
+                hidden_dim=self.config.decoder_hidden_dim,
+                num_layers=self.config.decoder_num_layers,
+                ternary_enabled=self.config.ternary_enabled,
+                partial_ternary=self.config.partial_ternary,
+            )
 
         ckpt = torch.load(checkpoint_path, map_location=self.device, weights_only=True)
         self.encoder.load_state_dict(ckpt["encoder"])
@@ -83,16 +93,23 @@ class NeuralDecider:
 
         tensors = self._build_tensors(board, candidates, plan, profile)
 
-        enc = self.encoder(
-            tensors["profile"],
-            tensors["plan_type"],
-            tensors["plan_activation"],
-            tensors["candidate_features"],
-            tensors["candidate_mask"],
+        enc_args = dict(
+            profile=tensors["profile"],
+            plan_type=tensors["plan_type"],
+            plan_activation=tensors["plan_activation"],
+            candidate_features=tensors["candidate_features"],
+            candidate_mask=tensors["candidate_mask"],
             profile_continuous=tensors["profile_continuous"],
         )
-        bridge_out = self.bridge(enc)
-        outputs = self.decoder(bridge_out, tensors["candidate_mask"])
+        if self.use_attention:
+            enc_args["return_candidate_encodings"] = True
+            enc_out, cand_encs = self.encoder(**enc_args)
+            bridge_out = self.bridge(enc_out)
+            outputs = self.decoder(bridge_out, cand_encs, tensors["candidate_mask"])
+        else:
+            enc_out = self.encoder(**enc_args)
+            bridge_out = self.bridge(enc_out)
+            outputs = self.decoder(bridge_out, tensors["candidate_mask"])
 
         logits = outputs["candidate_logits"][0]
         confidence = outputs["confidence"][0, 0].item()
