@@ -112,6 +112,10 @@ class YamiEngine:
         if use_klines and kline_db_path:
             self._klines = KLineMemory(kline_db_path)
 
+        # Opponent profiler
+        from yami.opponent_profile import OpponentProfiler
+        self._opponent_profiler = OpponentProfiler()
+
         # GM pattern database
         self._gm_db = None
         if use_gm_patterns:
@@ -123,6 +127,7 @@ class YamiEngine:
         self.state = GameState()
         if self._temporal:
             self._temporal.reset()
+        self._opponent_profiler.reset()
 
     @property
     def board(self) -> chess.Board:
@@ -198,6 +203,7 @@ class YamiEngine:
 
             # Run coherence scoring across all signals
             from yami.coherence import compute_coherence
+            la_weight = self._opponent_profiler.profile.look_ahead_weight()
             coherence_result = compute_coherence(
                 board,
                 [m.move for m in censored[:10]],  # top 10 candidates
@@ -205,6 +211,7 @@ class YamiEngine:
                 temporal=self._temporal,
                 klines=self._klines,
                 gm_db=self._gm_db,
+                look_ahead_weight=la_weight,
             )
 
             # Reorder censored moves by coherence-weighted final score
@@ -286,6 +293,8 @@ class YamiEngine:
     def play_opponent_move(self, san: str) -> chess.Move | None:
         move = parse_move(self.state.board, san)
         if move is not None:
+            # Observe opponent behavior before pushing
+            self._opponent_profiler.observe_move(self.state.board, move)
             self.state.board.push(move)
             self.state.move_history.append(move)
         return move

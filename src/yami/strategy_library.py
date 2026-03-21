@@ -195,6 +195,99 @@ STRATEGY_LIBRARY: list[Strategy] = [
         expected_moves=3,
     ),
 
+    # === FAMOUS GAME PATTERNS (Initiative-Creating) ===
+    Strategy(
+        name="greek_gift_sacrifice",
+        description="Sacrifice bishop on h7 to expose castled king (Bxh7+)",
+        nav_profile=(1, 1, 1, 1, 1, 0),
+        required_anchors=frozenset({"sacrifice"}),
+        preferred_anchors=frozenset({"king-hunt", "tempo-gain", "back-rank-threat"}),
+        move_patterns=["Bxh7+", "Ng5", "Qh5"],
+        piece_priority=[chess.BISHOP, chess.KNIGHT, chess.QUEEN],
+        target_files=[6, 7],  # g, h files
+        target_ranks=[5, 6, 7],
+        phase="middlegame",
+        expected_moves=5,
+    ),
+    Strategy(
+        name="exchange_sacrifice_on_c3",
+        description="Sacrifice exchange on c3 to destroy pawn structure (Petrosian style)",
+        nav_profile=(0, 1, 1, 1, 0, 0),
+        required_anchors=frozenset(),
+        preferred_anchors=frozenset({"sacrifice", "pawn-break", "piece-coordination"}),
+        move_patterns=["Rxc3"],
+        piece_priority=[chess.ROOK],
+        target_files=[2],  # c file
+        target_ranks=[2],  # 3rd rank
+        phase="middlegame",
+        expected_moves=4,
+    ),
+    Strategy(
+        name="knight_sacrifice_f7",
+        description="Sacrifice knight on f7 to fork king and queen or open lines",
+        nav_profile=(1, 1, -1, 1, 1, 0),
+        required_anchors=frozenset(),
+        preferred_anchors=frozenset({"sacrifice", "fork", "tempo-gain"}),
+        move_patterns=["Nxf7"],
+        piece_priority=[chess.KNIGHT],
+        target_files=[5],  # f file
+        target_ranks=[6],  # 7th rank
+        phase="middlegame",
+        expected_moves=3,
+    ),
+    Strategy(
+        name="queenside_expansion",
+        description="Expand on queenside with a4-a5 and b4-b5 pawn chain",
+        nav_profile=(0, -1, 0, 1, 0, 0),
+        required_anchors=frozenset(),
+        preferred_anchors=frozenset({"pawn-break", "space-advantage", "minority-attack"}),
+        move_patterns=["a4", "a5", "b4", "b5"],
+        piece_priority=[chess.PAWN],
+        target_files=[0, 1],  # a, b files
+        target_ranks=[3, 4, 5],
+        phase="middlegame",
+        expected_moves=5,
+    ),
+    Strategy(
+        name="fianchetto_pressure",
+        description="Fianchetto bishop to put long-diagonal pressure on enemy position",
+        nav_profile=(0, 1, 0, 0, 0, 1),
+        required_anchors=frozenset(),
+        preferred_anchors=frozenset({"fianchetto", "center-control", "development"}),
+        move_patterns=["g3", "Bg2", "b3", "Bb2"],
+        piece_priority=[chess.BISHOP, chess.PAWN],
+        target_files=[1, 6],  # b, g files
+        target_ranks=[1, 2],
+        phase="opening",
+        expected_moves=3,
+    ),
+    Strategy(
+        name="zwischenzug_tempo",
+        description="Interpose a forcing move before completing an exchange",
+        nav_profile=(0, 0, -1, 1, 0, 0),
+        required_anchors=frozenset(),
+        preferred_anchors=frozenset({"tempo-gain", "zwischenzug"}),
+        move_patterns=[],
+        piece_priority=[],
+        target_files=[],
+        target_ranks=[],
+        phase="middlegame",
+        expected_moves=2,
+    ),
+    Strategy(
+        name="king_walk_attack",
+        description="Use king as attacking piece in endgame (Brenin/Short style)",
+        nav_profile=(1, 0, 1, 1, 0, -1),
+        required_anchors=frozenset({"king-march"}),
+        preferred_anchors=frozenset({"king-activity", "endgame-technique"}),
+        move_patterns=[],
+        piece_priority=[chess.KING],
+        target_files=[3, 4, 5],
+        target_ranks=[4, 5, 6],
+        phase="endgame",
+        expected_moves=6,
+    ),
+
     # === DEFENSIVE STRATEGIES ===
     Strategy(
         name="fortress_construction",

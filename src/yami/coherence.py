@@ -46,6 +46,8 @@ class MoveSignals:
     gm_frequency: float = 0.0
     gm_win_rate: float = 0.5
     censor_pass: bool = True
+    # 2-ply look-ahead
+    look_ahead_score: float = 0.0  # positive = good after opponent responds
     # OTP ternary signals (-1, 0, +1)
     ternary_navigator: int = 0
     ternary_strategy: int = 0
@@ -78,6 +80,7 @@ def compute_coherence(
     temporal: TemporalController | None = None,
     klines: KLineMemory | None = None,
     gm_db: GMPatternDB | None = None,
+    look_ahead_weight: float = 1.0,
 ) -> CoherenceResult:
     """Score candidate moves by holographic multi-signal coherence."""
     # Gather position-level context
@@ -157,6 +160,9 @@ def compute_coherence(
             signals.gm_frequency = gm.frequency
             signals.gm_win_rate = gm.win_rate
 
+        # 2-ply look-ahead: push move, check opponent's best responses
+        signals.look_ahead_score = _compute_look_ahead(board, move)
+
         # Convert to OTP ternary (-1, 0, +1)
         signals.ternary_navigator = _to_ternary(signals.navigator_score, 2.0)
         signals.ternary_strategy = _to_ternary(signals.strategy_score, 1.5)
@@ -207,7 +213,7 @@ def compute_coherence(
         # Coherence: weighted combination
         signals.coherence = max(0.0, signals.interference / 5.0)
 
-        # Final score: raw signals + interference pattern + convergence
+        # Final score: raw signals + interference + convergence + look-ahead
         signals.final_score = (
             signals.navigator_score * 2.0
             + signals.strategy_score * 2.5
@@ -217,6 +223,7 @@ def compute_coherence(
             + signals.gm_win_rate * 2.0  # winning moves weighted more
             + signals.interference * 3.0  # interference is key
             + signals.temporal_convergence * 2.0  # convergence bonus
+            + signals.look_ahead_score * look_ahead_weight  # opponent-calibrated
         )
 
         if not signals.censor_pass:
@@ -267,6 +274,90 @@ def _to_ternary(value: float, threshold: float) -> int:
     if value < -threshold:
         return -1
     return 0
+
+
+def _compute_look_ahead(board: chess.Board, move: chess.Move) -> float:
+    """2-ply look-ahead: evaluate position quality after opponent responds.
+
+    Push our move, then check:
+    1. Does opponent have immediate forcing responses (checks, captures)?
+    2. How many legal moves do we have after opponent's best response?
+    3. Are we losing material?
+
+    Returns positive score for moves that lead to good positions,
+    negative for moves that walk into trouble.
+    """
+    score = 0.0
+
+    board.push(move)
+    try:
+        if board.is_checkmate():
+            return 10.0  # we delivered checkmate
+
+        if board.is_stalemate():
+            return -2.0  # stalemate is bad if we're winning
+
+        # Count opponent's forcing responses
+        opp_checks = 0
+        opp_captures = 0
+        opp_threats = 0
+
+        for opp_move in board.legal_moves:
+            if board.is_capture(opp_move):
+                opp_captures += 1
+            board.push(opp_move)
+            if board.is_check():
+                opp_checks += 1
+            if board.is_checkmate():
+                opp_threats += 5  # opponent can mate us
+            board.pop()
+
+            # Limit search for speed
+            if opp_checks + opp_captures > 10:
+                break
+
+        # Penalize moves that give opponent many forcing responses
+        if opp_threats > 0:
+            score -= 5.0  # opponent can mate — very bad
+        if opp_checks >= 3:
+            score -= 2.0  # many checks available for opponent
+        if opp_captures >= 5:
+            score -= 1.0  # lots of captures = tactical chaos (risky)
+
+        # Reward moves that restrict opponent
+        opp_mobility = board.legal_moves.count()
+        if opp_mobility < 10:
+            score += 1.5  # opponent is cramped
+        elif opp_mobility > 35:
+            score -= 0.5  # opponent has too much freedom
+
+        # Check if we're still okay after opponent's "best" response
+        # Simple heuristic: opponent plays first capture or check
+        best_opp = None
+        for opp_move in board.legal_moves:
+            board.push(opp_move)
+            if board.is_checkmate():
+                board.pop()
+                score -= 8.0  # opponent can mate after our move
+                return score
+            board.pop()
+            if best_opp is None and board.is_capture(opp_move):
+                best_opp = opp_move
+
+        # After opponent's likely response, how many moves do we have?
+        if best_opp:
+            board.push(best_opp)
+            our_response_count = board.legal_moves.count()
+            if our_response_count == 0:
+                score -= 3.0  # we're stuck after opponent responds
+            elif our_response_count > 20:
+                score += 0.5  # we have options
+            board.pop()
+
+    finally:
+        board.pop()
+
+    return score
 
 
 def _normalize_signals(results: list[MoveSignals]) -> None:
