@@ -1,8 +1,9 @@
 """Yami Engine — the full pipeline coordinator.
 
-Wires all 8 layers together into a single decision pipeline:
-Board → Legal Moves → Tactical Scoping → Endgame/Opening → Knowledge Graph
-→ Candidate Filtering → LLM Decision → Verification
+Wires all layers together into a single decision pipeline:
+Board → Legal Moves → Tactical Scoping → Endgame/Opening
+→ 6-Bank Navigator → K-Line Memory → Temporal Controller
+→ Candidate Filtering → Neural/LLM Decision → Verification
 """
 
 from __future__ import annotations
@@ -14,15 +15,23 @@ import chess
 
 from yami import endgame_resolver, opening_book
 from yami.candidate_filter import filter_and_annotate
+from yami.kline_memory import KLineMemory
 from yami.legal_moves import generate_legal_moves, is_game_over, is_legal, parse_move
 from yami.llm_decision import choose_move_sync
 from yami.models import AnnotatedCandidate, GameState, PlanTemplate, PositionalProfile
+from yami.navigator import (
+    NavigationVector,
+    compute_navigation_vector,
+    detect_anchors,
+    rank_candidates_by_navigation,
+)
 from yami.tactical_scoper import (
     apply_blunder_censor,
     apply_repetition_censor,
     apply_tactical_censor,
     scope_moves,
 )
+from yami.temporal_controller import TemporalController, TemporalState
 
 
 class DecisionSource(Enum):
@@ -30,6 +39,7 @@ class DecisionSource(Enum):
 
     ENDGAME_TABLEBASE = "endgame_tablebase"
     OPENING_BOOK = "opening_book"
+    KLINE_MEMORY = "kline_memory"
     LLM_DECISION = "llm_decision"
     NEURAL_DECISION = "neural_decision"
     INFRASTRUCTURE_FALLBACK = "infrastructure_fallback"
@@ -45,13 +55,15 @@ class MoveDecision:
     candidates: list[AnnotatedCandidate] = field(default_factory=list)
     plan: PlanTemplate | None = None
     profile: PositionalProfile | None = None
+    nav_vector: NavigationVector | None = None
+    temporal_state: TemporalState | None = None
     legal_move_count: int = 0
     scoped_move_count: int = 0
     censored_move_count: int = 0
 
 
 class YamiEngine:
-    """The full Yami infrastructure + LLM chess engine."""
+    """The full Yami infrastructure + neural chess engine."""
 
     def __init__(
         self,
@@ -62,6 +74,10 @@ class YamiEngine:
         use_opening_book: bool = True,
         use_endgame_tables: bool = True,
         use_censors: bool = True,
+        use_navigator: bool = True,
+        use_klines: bool = False,
+        use_temporal: bool = True,
+        kline_db_path: str | None = None,
         max_candidates: int = 5,
     ):
         self.use_llm = use_llm
@@ -69,8 +85,13 @@ class YamiEngine:
         self.use_opening_book = use_opening_book
         self.use_endgame_tables = use_endgame_tables
         self.use_censors = use_censors
+        self.use_navigator = use_navigator
+        self.use_klines = use_klines
+        self.use_temporal = use_temporal
         self.max_candidates = max_candidates
         self.state = GameState()
+
+        # Neural model
         self._neural_decider = None
         if use_neural and neural_checkpoint:
             from yami.neural.inference import NeuralDecider
@@ -78,19 +99,26 @@ class YamiEngine:
                 neural_checkpoint, config=neural_config
             )
 
+        # Temporal controller
+        self._temporal = TemporalController() if use_temporal else None
+
+        # K-line memory
+        self._klines = None
+        if use_klines and kline_db_path:
+            self._klines = KLineMemory(kline_db_path)
+
     def reset(self) -> None:
         """Reset the engine for a new game."""
         self.state = GameState()
+        if self._temporal:
+            self._temporal.reset()
 
     @property
     def board(self) -> chess.Board:
         return self.state.board
 
     def decide(self, board: chess.Board | None = None) -> MoveDecision:
-        """Run the full Yami pipeline and decide on a move.
-
-        This is the main entry point — it runs all 8 layers.
-        """
+        """Run the full Yami pipeline and decide on a move."""
         if board is None:
             board = self.state.board
 
@@ -144,17 +172,72 @@ class YamiEngine:
         else:
             censored = scoped
 
-        # Ensure we have at least one move
         if not censored:
-            censored = scoped  # fall back to uncensored if all censored
+            censored = scoped
 
-        # Layers 5-6: Knowledge graph + candidate filtering
+        # Layer 5: 6-Bank Navigator (Wayfinder-style)
+        nav_vector = None
+        if self.use_navigator:
+            nav_vector = compute_navigation_vector(board)
+
+            # Get temporal plan bias
+            plan_bias = {}
+            if self._temporal:
+                plan_bias = self._temporal.get_plan_bias()
+
+            # Score candidates by OTP alignment
+            nav_ranked = rank_candidates_by_navigation(
+                board,
+                [(m.move, m) for m in censored],
+                nav_vector,
+            )
+
+            # Apply plan bias to OTP scores
+            if plan_bias:
+                boosted = []
+                for move, otp, anchors in nav_ranked:
+                    bias_bonus = sum(plan_bias.values()) * 0.5
+                    boosted.append((move, otp + bias_bonus, anchors))
+                nav_ranked = sorted(boosted, key=lambda x: x[1], reverse=True)
+
+            # Reorder censored moves by navigation ranking
+            nav_move_order = {move: i for i, (move, _, _) in enumerate(nav_ranked)}
+            censored = sorted(
+                censored,
+                key=lambda m: nav_move_order.get(m.move, 999),
+            )
+
+        # Layer 5b: K-Line Memory check
+        if self._klines and nav_vector:
+            all_anchors: set[str] = set()
+            for m in censored[:5]:
+                all_anchors |= detect_anchors(board, m.move)
+
+            kline_matches = self._klines.query(
+                board, nav_vector, all_anchors, top_k=1
+            )
+            if kline_matches and kline_matches[0].match_score > 0.5:
+                kline = kline_matches[0]
+                # Try to play the K-line's first move
+                if kline.move_sequence:
+                    kline_san = kline.move_sequence[0]
+                    kline_move = parse_move(board, kline_san)
+                    if kline_move and is_legal(board, kline_move):
+                        return MoveDecision(
+                            move=kline_move,
+                            source=DecisionSource.KLINE_MEMORY,
+                            nav_vector=nav_vector,
+                            legal_move_count=len(legal_moves),
+                            scoped_move_count=len(scoped),
+                            censored_move_count=len(censored),
+                        )
+
+        # Layers 5-6: Candidate filtering + annotation
         candidates, plan, profile = filter_and_annotate(
             board, censored, max_candidates=self.max_candidates
         )
 
         if not candidates:
-            # Shouldn't happen, but safety fallback
             return MoveDecision(
                 move=legal_moves[0],
                 source=DecisionSource.INFRASTRUCTURE_FALLBACK,
@@ -178,7 +261,6 @@ class YamiEngine:
 
         # Layer 8: Legal move verification
         if chosen is not None and not is_legal(board, chosen):
-            # LLM hallucinated an illegal move — use top candidate
             chosen = candidates[0].move
 
         return MoveDecision(
@@ -187,6 +269,7 @@ class YamiEngine:
             candidates=candidates,
             plan=plan,
             profile=profile,
+            nav_vector=nav_vector,
             legal_move_count=len(legal_moves),
             scoped_move_count=len(scoped),
             censored_move_count=len(censored),
@@ -195,13 +278,19 @@ class YamiEngine:
     def play_move(self, move: chess.Move | None = None) -> MoveDecision:
         """Decide on a move and play it on the internal board."""
         if move is not None:
-            # External move (e.g., opponent's move)
             self.state.board.push(move)
             self.state.move_history.append(move)
             return MoveDecision(move=move, source=DecisionSource.INFRASTRUCTURE_FALLBACK)
 
         decision = self.decide()
         if decision.move is not None:
+            # Update temporal controller before pushing
+            if self._temporal and decision.nav_vector:
+                move_anchors = detect_anchors(self.state.board, decision.move)
+                self._temporal.update(
+                    decision.nav_vector,
+                    move_anchors,
+                )
             self.state.board.push(decision.move)
             self.state.move_history.append(decision.move)
             if decision.plan:
@@ -209,7 +298,6 @@ class YamiEngine:
         return decision
 
     def play_opponent_move(self, san: str) -> chess.Move | None:
-        """Parse and play the opponent's move in SAN notation."""
         move = parse_move(self.state.board, san)
         if move is not None:
             self.state.board.push(move)
