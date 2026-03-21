@@ -225,7 +225,7 @@ class YamiEngine:
             kline_matches = self._klines.query(
                 board, nav_vector, all_anchors, top_k=1
             )
-            if kline_matches and kline_matches[0].match_score > 0.5:
+            if kline_matches and kline_matches[0].match_score > 0.85:
                 kline = kline_matches[0]
                 # Try to play the K-line's first move
                 if kline.move_sequence:
