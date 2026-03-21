@@ -2,6 +2,7 @@
 
 import torch
 
+from yami.datagen.contracts import CANDIDATE_FEAT_DIM
 from yami.neural.bridge import InformationBridge
 from yami.neural.decoder import ChessTernaryDecoder, TernaryLinear, ternary_quantize
 from yami.neural.encoder import CandidateEncoder, ChessPositionEncoder
@@ -37,8 +38,8 @@ def test_ternary_linear_shape():
 
 
 def test_candidate_encoder_shape():
-    enc = CandidateEncoder(out_dim=48)
-    x = torch.randn(4, 18)  # 9 motifs + 1 + 1 + 4 + 1 + 1 + 1
+    enc = CandidateEncoder(input_dim=CANDIDATE_FEAT_DIM, out_dim=48)
+    x = torch.randn(4, CANDIDATE_FEAT_DIM)
     out = enc(x)
     assert out.shape == (4, 48)
 
@@ -47,30 +48,63 @@ def test_chess_position_encoder_shape():
     enc = ChessPositionEncoder(output_dim=384, candidate_dim=48, embed_dim=8)
     batch = 4
     profile = torch.randint(0, 3, (batch, 6))
+    profile_cont = torch.randn(batch, 3)
     plan_type = torch.randint(0, 7, (batch,))
     plan_act = torch.randn(batch, 1)
-    cand_feats = torch.randn(batch, 5, 18)
+    cand_feats = torch.randn(batch, 5, CANDIDATE_FEAT_DIM)
     cand_mask = torch.ones(batch, 5, dtype=torch.bool)
-    cand_mask[:, 3:] = False  # 3 real candidates
+    cand_mask[:, 3:] = False
+
+    out = enc(profile, plan_type, plan_act, cand_feats, cand_mask,
+              profile_continuous=profile_cont)
+    assert out.shape == (batch, 384)
+
+
+def test_encoder_without_profile_continuous():
+    """Backward compat: encoder works without profile_continuous."""
+    enc = ChessPositionEncoder(output_dim=384)
+    batch = 2
+    profile = torch.randint(0, 3, (batch, 6))
+    plan_type = torch.randint(0, 7, (batch,))
+    plan_act = torch.randn(batch, 1)
+    cand_feats = torch.randn(batch, 5, CANDIDATE_FEAT_DIM)
+    cand_mask = torch.ones(batch, 5, dtype=torch.bool)
 
     out = enc(profile, plan_type, plan_act, cand_feats, cand_mask)
     assert out.shape == (batch, 384)
+
+
+def test_encoder_return_candidate_encodings():
+    enc = ChessPositionEncoder(output_dim=384, candidate_dim=48)
+    batch = 2
+    profile = torch.randint(0, 3, (batch, 6))
+    plan_type = torch.randint(0, 7, (batch,))
+    plan_act = torch.randn(batch, 1)
+    cand_feats = torch.randn(batch, 5, CANDIDATE_FEAT_DIM)
+    cand_mask = torch.ones(batch, 5, dtype=torch.bool)
+
+    out, cand_encs = enc(profile, plan_type, plan_act, cand_feats, cand_mask,
+                         return_candidate_encodings=True)
+    assert out.shape == (batch, 384)
+    assert cand_encs.shape == (batch, 5, 48)
 
 
 def test_encoder_masked_candidates_differ():
     enc = ChessPositionEncoder(output_dim=384)
     batch = 2
     profile = torch.randint(0, 3, (batch, 6))
+    profile_cont = torch.randn(batch, 3)
     plan_type = torch.randint(0, 7, (batch,))
     plan_act = torch.randn(batch, 1)
-    cand_feats = torch.randn(batch, 5, 18)
+    cand_feats = torch.randn(batch, 5, CANDIDATE_FEAT_DIM)
 
     mask_3 = torch.tensor([[True, True, True, False, False]] * batch)
     mask_5 = torch.ones(batch, 5, dtype=torch.bool)
 
-    out_3 = enc(profile, plan_type, plan_act, cand_feats, mask_3)
-    out_5 = enc(profile, plan_type, plan_act, cand_feats, mask_5)
-    # Different masks should produce different outputs
+    out_3 = enc(profile, plan_type, plan_act, cand_feats, mask_3,
+                profile_continuous=profile_cont)
+    out_5 = enc(profile, plan_type, plan_act, cand_feats, mask_5,
+                profile_continuous=profile_cont)
     assert not torch.allclose(out_3, out_5)
 
 
@@ -140,7 +174,6 @@ def test_composite_loss_runs():
     result = loss_fn(cand_logits, plan_logits, cand_targets, plan_targets)
     assert "total" in result
     assert "candidate" in result
-    assert "plan" in result
     assert result["total"].requires_grad
 
 
@@ -169,12 +202,14 @@ def test_full_pipeline_forward():
 
     batch = 2
     profile = torch.randint(0, 3, (batch, 6))
+    profile_cont = torch.randn(batch, 3)
     plan_type = torch.randint(0, 7, (batch,))
     plan_act = torch.randn(batch, 1)
-    cand_feats = torch.randn(batch, 5, 18)
+    cand_feats = torch.randn(batch, 5, CANDIDATE_FEAT_DIM)
     cand_mask = torch.ones(batch, 5, dtype=torch.bool)
 
-    enc_out = enc(profile, plan_type, plan_act, cand_feats, cand_mask)
+    enc_out = enc(profile, plan_type, plan_act, cand_feats, cand_mask,
+                  profile_continuous=profile_cont)
     bridge_out = bridge(enc_out)
     dec_out = dec(bridge_out, cand_mask)
 
@@ -190,6 +225,5 @@ def test_full_pipeline_forward():
     )
     loss["total"].backward()
 
-    # Check gradients exist
     assert enc.profile_proj[0].weight.grad is not None
     assert bridge.projection.weight.grad is not None

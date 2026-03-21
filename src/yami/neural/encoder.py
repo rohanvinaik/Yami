@@ -1,7 +1,7 @@
 """Chess position encoder — structured features to fixed-dim embedding.
 
-Replaces all-MiniLM-L6-v2 from ShortcutForge. The input is structured
-chess data (not natural language), so we encode it directly.
+Encodes structured chess data directly (not natural language).
+Supports enriched 30-dim candidate features and 3-dim board-level continuous features.
 """
 
 from __future__ import annotations
@@ -9,7 +9,7 @@ from __future__ import annotations
 import torch
 import torch.nn as nn
 
-from yami.datagen.contracts import MOTIF_VOCAB
+from yami.datagen.contracts import CANDIDATE_FEAT_DIM
 
 
 class CandidateEncoder(nn.Module):
@@ -19,27 +19,15 @@ class CandidateEncoder(nn.Module):
     candidate quality features, not positional bias.
     """
 
-    def __init__(self, out_dim: int = 48) -> None:
+    def __init__(self, input_dim: int = CANDIDATE_FEAT_DIM, out_dim: int = 48) -> None:
         super().__init__()
-        # Input features per candidate:
-        #   motif_flags (9) + plan_alignment (1) + positional_eval (1)
-        #   + risk_level_onehot (4) + is_capture (1) + is_check (1) + see_value (1)
-        input_dim = len(MOTIF_VOCAB) + 1 + 1 + 4 + 1 + 1 + 1
         self.net = nn.Sequential(
-            nn.Linear(input_dim, 64),
+            nn.Linear(input_dim, 96),
             nn.ReLU(),
-            nn.Linear(64, out_dim),
+            nn.Linear(96, out_dim),
         )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """Encode candidate features.
-
-        Args:
-            x: [batch, input_dim] candidate feature vector.
-
-        Returns:
-            [batch, out_dim] encoded candidate.
-        """
         return self.net(x)
 
 
@@ -47,14 +35,19 @@ class ChessPositionEncoder(nn.Module):
     """Encode structured chess position into a fixed-dim embedding.
 
     Architecture:
-      - Position profile: 6 categorical → embeddings → 64-dim
+      - Position profile: 6 categorical + 3 continuous → 64-dim
       - Plan context: 1 categorical + 1 float → 32-dim
-      - Per-candidate: shared CandidateEncoder → 48-dim × 5
+      - Per-candidate: shared CandidateEncoder → candidate_dim × 5
       - Concat → Linear → output_dim (384)
 
     Args:
         output_dim: Final embedding dimension (matches bridge input).
         candidate_dim: Per-candidate encoding dimension.
+        embed_dim: Categorical embedding dimension.
+        profile_continuous_dim: Number of continuous profile features.
+        candidate_input_dim: Per-candidate feature dimension.
+        return_candidate_encodings: If True, also return per-candidate encodings
+            (needed for Config E attention decoder).
     """
 
     def __init__(
@@ -62,36 +55,40 @@ class ChessPositionEncoder(nn.Module):
         output_dim: int = 384,
         candidate_dim: int = 48,
         embed_dim: int = 8,
+        profile_continuous_dim: int = 3,
+        candidate_input_dim: int = CANDIDATE_FEAT_DIM,
     ) -> None:
         super().__init__()
         self.output_dim = output_dim
+        self.candidate_dim = candidate_dim
 
         # Positional profile embeddings
-        self.material_emb = nn.Embedding(3, embed_dim)   # behind/equal/ahead
-        self.structure_emb = nn.Embedding(6, embed_dim)  # 6 structure types
+        self.material_emb = nn.Embedding(3, embed_dim)
+        self.structure_emb = nn.Embedding(6, embed_dim)
         self.activity_emb = nn.Embedding(3, embed_dim)
         self.safety_emb = nn.Embedding(3, embed_dim)
         self.opp_safety_emb = nn.Embedding(3, embed_dim)
         self.tempo_emb = nn.Embedding(3, embed_dim)
 
-        profile_dim = 6 * embed_dim  # 48
+        profile_dim = 6 * embed_dim + profile_continuous_dim  # 48 + 3 = 51
         self.profile_proj = nn.Sequential(
             nn.Linear(profile_dim, 64),
             nn.ReLU(),
         )
 
         # Plan context
-        self.plan_type_emb = nn.Embedding(7, 16)  # 7 plan types
+        self.plan_type_emb = nn.Embedding(7, 16)
         self.plan_proj = nn.Sequential(
-            nn.Linear(16 + 1, 32),  # +1 for activation score
+            nn.Linear(16 + 1, 32),
             nn.ReLU(),
         )
 
         # Shared candidate encoder
-        self.candidate_encoder = CandidateEncoder(out_dim=candidate_dim)
+        self.candidate_encoder = CandidateEncoder(
+            input_dim=candidate_input_dim, out_dim=candidate_dim
+        )
 
-        # Final projection
-        # 64 (profile) + 32 (plan) + 5*candidate_dim (candidates)
+        # Final projection: 64 + 32 + 5*candidate_dim
         total_dim = 64 + 32 + 5 * candidate_dim
         self.final_proj = nn.Sequential(
             nn.Linear(total_dim, output_dim),
@@ -105,19 +102,23 @@ class ChessPositionEncoder(nn.Module):
         plan_activation: torch.Tensor,
         candidate_features: torch.Tensor,
         candidate_mask: torch.Tensor,
-    ) -> torch.Tensor:
+        profile_continuous: torch.Tensor | None = None,
+        return_candidate_encodings: bool = False,
+    ) -> torch.Tensor | tuple[torch.Tensor, torch.Tensor]:
         """Encode a chess position.
 
         Args:
-            profile: [batch, 6] int tensor (material, structure, activity,
-                     safety, opp_safety, tempo).
-            plan_type: [batch] int tensor (0-6).
+            profile: [batch, 6] int tensor.
+            plan_type: [batch] int tensor.
             plan_activation: [batch, 1] float tensor.
             candidate_features: [batch, 5, feat_dim] float tensor.
-            candidate_mask: [batch, 5] bool tensor (True = real candidate).
+            candidate_mask: [batch, 5] bool tensor.
+            profile_continuous: [batch, 3] float tensor (optional).
+            return_candidate_encodings: Also return [batch, 5, cand_dim].
 
         Returns:
-            [batch, output_dim] position embedding.
+            [batch, output_dim] position embedding, or
+            tuple of (embedding, [batch, 5, cand_dim]) if return_candidate_encodings.
         """
         # Encode positional profile
         p_mat = self.material_emb(profile[:, 0])
@@ -127,24 +128,37 @@ class ChessPositionEncoder(nn.Module):
         p_opp = self.opp_safety_emb(profile[:, 4])
         p_tmp = self.tempo_emb(profile[:, 5])
         profile_cat = torch.cat([p_mat, p_str, p_act, p_saf, p_opp, p_tmp], dim=-1)
-        profile_enc = self.profile_proj(profile_cat)  # [batch, 64]
+
+        if profile_continuous is not None:
+            profile_cat = torch.cat([profile_cat, profile_continuous], dim=-1)
+        else:
+            # Pad with zeros if not provided (backward compat)
+            zeros = torch.zeros(profile_cat.shape[0], 3, device=profile_cat.device)
+            profile_cat = torch.cat([profile_cat, zeros], dim=-1)
+
+        profile_enc = self.profile_proj(profile_cat)
 
         # Encode plan
-        plan_emb = self.plan_type_emb(plan_type)  # [batch, 16]
-        plan_cat = torch.cat([plan_emb, plan_activation], dim=-1)  # [batch, 17]
-        plan_enc = self.plan_proj(plan_cat)  # [batch, 32]
+        plan_emb = self.plan_type_emb(plan_type)
+        plan_cat = torch.cat([plan_emb, plan_activation], dim=-1)
+        plan_enc = self.plan_proj(plan_cat)
 
         # Encode candidates (shared weights, applied per-slot)
         cand_encs = []
         for i in range(5):
-            cand_feat = candidate_features[:, i, :]  # [batch, feat_dim]
-            enc = self.candidate_encoder(cand_feat)  # [batch, 48]
-            # Zero out padded candidates
+            cand_feat = candidate_features[:, i, :]
+            enc = self.candidate_encoder(cand_feat)
             mask_i = candidate_mask[:, i].unsqueeze(-1).float()
             enc = enc * mask_i
             cand_encs.append(enc)
-        cand_enc = torch.cat(cand_encs, dim=-1)  # [batch, 5*48]
+
+        cand_enc_stacked = torch.stack(cand_encs, dim=1)  # [batch, 5, cand_dim]
+        cand_enc_flat = cand_enc_stacked.reshape(cand_enc_stacked.shape[0], -1)
 
         # Concat and project
-        combined = torch.cat([profile_enc, plan_enc, cand_enc], dim=-1)
-        return self.final_proj(combined)
+        combined = torch.cat([profile_enc, plan_enc, cand_enc_flat], dim=-1)
+        output = self.final_proj(combined)
+
+        if return_candidate_encodings:
+            return output, cand_enc_stacked
+        return output

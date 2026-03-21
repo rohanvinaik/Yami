@@ -7,6 +7,7 @@ from pathlib import Path
 import chess
 
 from yami.datagen.contracts import (
+    CANDIDATE_FEAT_DIM,
     MOTIF_VOCAB,
     CandidateFeatures,
     ChessExample,
@@ -16,39 +17,33 @@ from yami.datagen.contracts import (
 from yami.datagen.feature_extractor import board_to_example, extract_features
 
 
-def _make_example() -> ChessExample:
-    """Create a minimal valid ChessExample."""
-    cands = []
-    for i in range(3):
-        cands.append(CandidateFeatures(
-            move_uci=f"e2e{4 + i}",
-            move_san=f"e{4 + i}",
-            motif_flags=[0] * len(MOTIF_VOCAB),
-            plan_alignment=float(i),
-            positional_eval=0.0,
-            risk_level=0,
-            is_capture=False,
-            is_check=False,
-            see_value=0.0,
-        ))
-    # Pad to 5
-    pad = CandidateFeatures(
-        move_uci="0000", move_san="--",
+def _make_candidate(uci: str = "e2e4", san: str = "e4") -> CandidateFeatures:
+    return CandidateFeatures(
+        move_uci=uci, move_san=san,
         motif_flags=[0] * len(MOTIF_VOCAB),
         plan_alignment=0.0, positional_eval=0.0,
         risk_level=0, is_capture=False, is_check=False, see_value=0.0,
+        piece_type_onehot=[0] * 6, target_centrality=0.0,
+        dist_to_opp_king=0.0, dist_to_own_king=0.0,
+        is_castling=False, opponent_mobility=0.0, pawn_structure_change=0.0,
     )
-    cands.extend([pad, pad])
 
+
+def _make_pad() -> CandidateFeatures:
+    return _make_candidate(uci="0000", san="--")
+
+
+def _make_example() -> ChessExample:
+    cands = [_make_candidate() for _ in range(3)]
+    cands.extend([_make_pad(), _make_pad()])
     return ChessExample(
         fen=chess.STARTING_FEN,
         material=1, structure=1, activity=0,
         safety=0, opponent_safety=0, tempo=1,
         plan_type=0, plan_activation=1.5,
-        candidates=cands,
-        num_candidates=3,
-        best_candidate_idx=0,
-        oracle_eval_cp=50,
+        candidates=cands, num_candidates=3,
+        game_phase=0.9, total_material=0.9, move_number=0.01,
+        best_candidate_idx=0, oracle_eval_cp=50,
     )
 
 
@@ -58,7 +53,7 @@ def test_chess_example_roundtrip():
     recovered = ChessExample.from_json(json_str)
     assert recovered.fen == ex.fen
     assert recovered.num_candidates == 3
-    assert recovered.best_candidate_idx == 0
+    assert recovered.game_phase == 0.9
     assert len(recovered.candidates) == 5
 
 
@@ -75,10 +70,15 @@ def test_save_load_dataset():
 def test_extract_features_starting_position():
     board = chess.Board()
     cands, profile, plan_idx = extract_features(board)
-    assert len(cands) == 5  # padded to 5
+    assert len(cands) == 5
     assert 0 <= plan_idx <= 6
     assert "material" in profile
-    assert "safety" in profile
+    # Verify new features are populated
+    real_cands = [c for c in cands if c.move_uci != "0000"]
+    assert len(real_cands) >= 2
+    c0 = real_cands[0]
+    assert len(c0.piece_type_onehot) == 6
+    assert sum(c0.piece_type_onehot) == 1  # exactly one piece type
 
 
 def test_board_to_example():
@@ -87,9 +87,15 @@ def test_board_to_example():
     board.push_san("e5")
     ex = board_to_example(board, best_idx=0, oracle_eval_cp=30)
     assert ex.fen == board.fen()
-    assert ex.best_candidate_idx == 0
     assert ex.num_candidates >= 2
     assert len(ex.candidates) == 5
+    assert ex.game_phase > 0.0
+    assert ex.move_number > 0.0
+
+
+def test_candidate_feat_dim_matches():
+    """Verify CANDIDATE_FEAT_DIM matches actual feature count."""
+    assert CANDIDATE_FEAT_DIM == 30
 
 
 def test_json_serialization_valid():
@@ -97,3 +103,4 @@ def test_json_serialization_valid():
     parsed = json.loads(ex.to_json())
     assert isinstance(parsed["candidates"], list)
     assert parsed["num_candidates"] == 3
+    assert "game_phase" in parsed

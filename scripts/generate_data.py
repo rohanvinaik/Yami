@@ -25,7 +25,6 @@ from yami.candidate_filter import filter_and_annotate
 from yami.datagen.contracts import save_dataset
 from yami.datagen.feature_extractor import board_to_example
 from yami.datagen.label_oracle import label_candidates
-from yami.models import AnnotatedCandidate
 from yami.oracle import StockfishOracle
 from yami.tactical_scoper import (
     apply_blunder_censor,
@@ -119,7 +118,7 @@ def generate_positions_and_label(
 
     elapsed = time.time() - t0
     agree_pct = infra_agrees / max(infra_agrees + infra_disagrees, 1) * 100
-    print(f"\nGeneration complete:")
+    print("\nGeneration complete:")
     print(f"  Examples: {len(examples)}")
     print(f"  Games played: {games}")
     print(f"  Time: {elapsed:.1f}s ({len(examples)/elapsed:.1f} ex/s)")
@@ -207,7 +206,7 @@ def main():
         # Distribution of best candidate index
         from collections import Counter
         train_dist = Counter(ex.best_candidate_idx for ex in train_examples)
-        print(f"\nBest candidate distribution (train):")
+        print("\nBest candidate distribution (train):")
         for idx in sorted(train_dist.keys()):
             pct = train_dist[idx] / len(train_examples) * 100
             print(f"  Candidate {idx}: {train_dist[idx]:>5} ({pct:.1f}%)")

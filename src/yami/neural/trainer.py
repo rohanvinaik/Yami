@@ -52,13 +52,23 @@ class YamiTrainer:
             bridge_dim=config.bridge_dim,
         ).to(self.device)
 
-        self.decoder = ChessTernaryDecoder(
-            input_dim=config.bridge_dim,
-            hidden_dim=config.decoder_hidden_dim,
-            num_layers=config.decoder_num_layers,
-            ternary_enabled=config.ternary_enabled,
-            partial_ternary=config.partial_ternary,
-        ).to(self.device)
+        self.use_attention = config.variant == "E"
+        if self.use_attention:
+            from yami.neural.attention_decoder import AttentionCandidateDecoder
+            self.decoder = AttentionCandidateDecoder(
+                bridge_dim=config.bridge_dim,
+                candidate_dim=config.candidate_dim,
+                num_heads=config.attention_heads,
+                hidden_dim=config.decoder_hidden_dim,
+            ).to(self.device)
+        else:
+            self.decoder = ChessTernaryDecoder(
+                input_dim=config.bridge_dim,
+                hidden_dim=config.decoder_hidden_dim,
+                num_layers=config.decoder_num_layers,
+                ternary_enabled=config.ternary_enabled,
+                partial_ternary=config.partial_ternary,
+            ).to(self.device)
 
         self.loss_fn = ChessCompositeLoss(
             margin=config.margin,
@@ -171,15 +181,23 @@ class YamiTrainer:
         batch = {k: v.to(self.device) for k, v in batch.items()}
 
         # Forward
-        enc = self.encoder(
-            batch["profile"],
-            batch["plan_type"],
-            batch["plan_activation"],
-            batch["candidate_features"],
-            batch["candidate_mask"],
+        enc_args = dict(
+            profile=batch["profile"],
+            plan_type=batch["plan_type"],
+            plan_activation=batch["plan_activation"],
+            candidate_features=batch["candidate_features"],
+            candidate_mask=batch["candidate_mask"],
+            profile_continuous=batch.get("profile_continuous"),
         )
-        bridge_out = self.bridge(enc)
-        outputs = self.decoder(bridge_out, batch["candidate_mask"])
+        if self.use_attention:
+            enc_args["return_candidate_encodings"] = True
+            enc_out, cand_encs = self.encoder(**enc_args)
+            bridge_out = self.bridge(enc_out)
+            outputs = self.decoder(bridge_out, cand_encs, batch["candidate_mask"])
+        else:
+            enc_out = self.encoder(**enc_args)
+            bridge_out = self.bridge(enc_out)
+            outputs = self.decoder(bridge_out, batch["candidate_mask"])
 
         # Loss
         second_targets = None

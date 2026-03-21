@@ -12,14 +12,13 @@ from __future__ import annotations
 
 import argparse
 import sys
-import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 import chess
 
-from yami.engine import DecisionSource, YamiEngine
+from yami.engine import YamiEngine
 
 
 def play_game(engine, opponent_oracle, engine_color=chess.WHITE, max_moves=200):
@@ -72,28 +71,12 @@ def run_match(engine, opponent_oracle, num_games=20, label=""):
         status = "W" if engine_win else ("L" if engine_loss else "D")
         print(f"  Game {i + 1:>2}: {status} ({result}) in {moves} moves")
 
-    wins = sum(
-        1 for i in range(num_games)
-        for r in [results]  # hack to avoid recounting
-    )
-    # Recount properly
-    engine_wins = 0
-    engine_losses = 0
-    draws = 0
-    for i in range(num_games):
-        color = chess.WHITE if i % 2 == 0 else chess.BLACK
-        # We need to replay... let's just count from results
-    # Simpler: count from the game logs
-    engine_wins = results.get("1-0", 0) // 2 + results.get("0-1", 0) // 2
-    # Actually let's just use the results dict directly
-    w_wins = results.get("1-0", 0)  # white wins
-    b_wins = results.get("0-1", 0)  # black wins
-    draws_count = results.get("1/2-1/2", 0)
+    # Results are already tracked per-game in the loop above via status
+    w_count = results.get("1-0", 0)
+    b_count = results.get("0-1", 0)
+    d_count = results.get("1/2-1/2", 0)
 
-    # Half games as white, half as black
-    # Engine wins = white wins when playing white + black wins when playing black
-    # Approximate: assume even split
-    print(f"\n  {label} Results: W-D-L = {w_wins}-{draws_count}-{b_wins}")
+    print(f"\n  {label} Results: White wins={w_count} Black wins={b_count} Draws={d_count}")
     print(f"  Avg game length: {total_moves / max(num_games, 1):.0f} moves")
 
     # Source distribution
@@ -145,7 +128,6 @@ def main():
             print("\n=== Comparison ===")
             i_draws = infra_results.get("1/2-1/2", 0)
             n_draws = neural_results.get("1/2-1/2", 0)
-            i_losses = infra_results.get("0-1", 0) + infra_results.get("1-0", 0) - infra_results.get("1/2-1/2", 0)
             print(f"  Infrastructure draws: {i_draws}/{args.games}")
             print(f"  Neural draws:         {n_draws}/{args.games}")
         else:

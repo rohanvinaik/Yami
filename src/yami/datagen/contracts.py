@@ -19,19 +19,31 @@ MOTIF_TO_IDX = {m: i for i, m in enumerate(MOTIF_VOCAB)}
 RISK_LEVELS = {"low": 0, "medium": 1, "high": 2, "critical": 3}
 
 
+# Total candidate feature dimensions: 30
+CANDIDATE_FEAT_DIM = 30
+
+
 @dataclass
 class CandidateFeatures:
     """Numeric encoding of a single annotated candidate."""
 
     move_uci: str
     move_san: str
-    motif_flags: list[int]  # one-hot, len=len(MOTIF_VOCAB)
+    motif_flags: list[int]  # one-hot, len=9
     plan_alignment: float
     positional_eval: float
     risk_level: int  # 0-3
     is_capture: bool
     is_check: bool
-    see_value: float  # normalized
+    see_value: float  # normalized by queen value
+    # New features (v2)
+    piece_type_onehot: list[int]  # one-hot, len=6 (P/N/B/R/Q/K)
+    target_centrality: float  # [0, 1]
+    dist_to_opp_king: float  # [0, 1]
+    dist_to_own_king: float  # [0, 1]
+    is_castling: bool
+    opponent_mobility: float  # [0, 1]
+    pawn_structure_change: float  # {-1, 0, +1}
 
 
 @dataclass
@@ -55,6 +67,10 @@ class ChessExample:
     # Oracle label
     best_candidate_idx: int  # 0-4
     oracle_eval_cp: int
+    # Board-level continuous features (v2)
+    game_phase: float = 0.0  # 1.0=opening, 0.0=endgame
+    total_material: float = 0.0  # normalized
+    move_number: float = 0.0  # normalized
     # Near-miss metadata
     second_best_idx: int = -1
     eval_gap_cp: int = 0

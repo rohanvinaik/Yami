@@ -66,7 +66,7 @@ def main():
     )
     elapsed = time.time() - t0
 
-    print(f"\n=== Training Complete ===")
+    print("\n=== Training Complete ===")
     print(f"Time: {elapsed:.1f}s")
     print(f"Steps: {metrics.steps}")
 

@@ -58,6 +58,7 @@ def _annotate(
         plan_alignment=ranked.alignment,
         plan_name=plan.name,
         positional_eval=pos_eval,
+        see_value=sm.see_value,
         risk=risk,
         narrative=narrative,
     )

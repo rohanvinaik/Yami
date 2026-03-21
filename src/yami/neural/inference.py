@@ -11,10 +11,11 @@ from pathlib import Path
 import chess
 import torch
 
-from yami.datagen.contracts import MOTIF_VOCAB, RISK_LEVELS
+from yami.datagen.contracts import CANDIDATE_FEAT_DIM, MOTIF_VOCAB, RISK_LEVELS
 from yami.datagen.feature_extractor import (
     _ACTIVITY_MAP,
     _MATERIAL_MAP,
+    _PIECE_TYPE_IDX,
     _PLAN_MAP,
     _SAFETY_MAP,
     _STRUCTURE_MAP,
@@ -26,14 +27,13 @@ from yami.neural.bridge import InformationBridge
 from yami.neural.config import NeuralConfig
 from yami.neural.decoder import ChessTernaryDecoder
 from yami.neural.encoder import ChessPositionEncoder
+from yami.tactical_scoper import PIECE_VALUES
+
+_MAX_MATERIAL = 2 * (900 + 2 * 500 + 2 * 330 + 2 * 320 + 8 * 100)
 
 
 class NeuralDecider:
-    """Neural candidate selector — replaces the LLM API call.
-
-    Loads a trained encoder-bridge-decoder checkpoint and selects
-    the best candidate from the infrastructure's annotated set.
-    """
+    """Neural candidate selector — replaces the LLM API call."""
 
     def __init__(
         self,
@@ -44,7 +44,6 @@ class NeuralDecider:
         self.config = config or NeuralConfig()
         self.device = torch.device(device)
 
-        # Build model
         self.encoder = ChessPositionEncoder(
             output_dim=self.config.encoder_output_dim,
             candidate_dim=self.config.candidate_dim,
@@ -62,7 +61,6 @@ class NeuralDecider:
             partial_ternary=self.config.partial_ternary,
         )
 
-        # Load checkpoint
         ckpt = torch.load(checkpoint_path, map_location=self.device, weights_only=True)
         self.encoder.load_state_dict(ckpt["encoder"])
         self.bridge.load_state_dict(ckpt["bridge"])
@@ -80,30 +78,23 @@ class NeuralDecider:
         plan: PlanTemplate,
         profile: PositionalProfile,
     ) -> tuple[chess.Move | None, float]:
-        """Select the best candidate using the neural model.
-
-        Returns:
-            (chosen_move, confidence)
-        """
         if not candidates:
             return None, 0.0
 
-        # Build input tensors
-        tensors = self._build_tensors(candidates, plan, profile)
+        tensors = self._build_tensors(board, candidates, plan, profile)
 
-        # Forward pass
         enc = self.encoder(
             tensors["profile"],
             tensors["plan_type"],
             tensors["plan_activation"],
             tensors["candidate_features"],
             tensors["candidate_mask"],
+            profile_continuous=tensors["profile_continuous"],
         )
         bridge_out = self.bridge(enc)
         outputs = self.decoder(bridge_out, tensors["candidate_mask"])
 
-        # Get prediction
-        logits = outputs["candidate_logits"][0]  # [5]
+        logits = outputs["candidate_logits"][0]
         confidence = outputs["confidence"][0, 0].item()
         pred_idx = logits.argmax().item()
 
@@ -113,14 +104,13 @@ class NeuralDecider:
 
     def _build_tensors(
         self,
+        board: chess.Board,
         candidates: list[AnnotatedCandidate],
         plan: PlanTemplate,
         profile: PositionalProfile,
     ) -> dict[str, torch.Tensor]:
-        """Convert Yami types to model input tensors."""
         dev = self.device
 
-        # Profile
         p = torch.tensor([[
             _MATERIAL_MAP.get(profile.material, 1),
             _STRUCTURE_MAP.get(profile.structure, 1),
@@ -130,6 +120,16 @@ class NeuralDecider:
             _TEMPO_MAP.get(profile.tempo, 1),
         ]], dtype=torch.long, device=dev)
 
+        # Board-level continuous features
+        total_mat = sum(
+            PIECE_VALUES.get(pc.piece_type, 0) for pc in board.piece_map().values()
+        )
+        profile_cont = torch.tensor([[
+            total_mat / _MAX_MATERIAL,
+            total_mat / _MAX_MATERIAL,
+            min(board.fullmove_number, 100) / 100.0,
+        ]], dtype=torch.float32, device=dev)
+
         plan_type = torch.tensor(
             [_PLAN_MAP.get(plan.plan_type, 0)], dtype=torch.long, device=dev
         )
@@ -137,13 +137,15 @@ class NeuralDecider:
             [[plan.activation_score]], dtype=torch.float32, device=dev
         )
 
-        # Candidates
-        feat_dim = len(MOTIF_VOCAB) + 1 + 1 + 4 + 1 + 1 + 1
-        cand_feats = torch.zeros(1, 5, feat_dim, device=dev)
+        our_king = board.king(board.turn)
+        opp_king = board.king(not board.turn)
+
+        cand_feats = torch.zeros(1, 5, CANDIDATE_FEAT_DIM, device=dev)
         cand_mask = torch.zeros(1, 5, dtype=torch.bool, device=dev)
 
         for i, c in enumerate(candidates[:5]):
             cand_mask[0, i] = True
+
             motif_flags = [0.0] * len(MOTIF_VOCAB)
             for m in c.tactical_motifs:
                 idx = MOTIF_TO_IDX.get(m)
@@ -151,22 +153,45 @@ class NeuralDecider:
                     motif_flags[idx] = 1.0
 
             risk_onehot = [0.0] * 4
-            risk_idx = RISK_LEVELS.get(c.risk, 0)
-            risk_onehot[risk_idx] = 1.0
+            risk_onehot[RISK_LEVELS.get(c.risk, 0)] = 1.0
+
+            # Piece type
+            piece = board.piece_at(c.move.from_square)
+            piece_onehot = [0.0] * 6
+            if piece:
+                pt_idx = _PIECE_TYPE_IDX.get(piece.piece_type)
+                if pt_idx is not None:
+                    piece_onehot[pt_idx] = 1.0
+
+            # Geometry
+            to_sq = c.move.to_square
+            to_f = chess.square_file(to_sq)
+            to_r = chess.square_rank(to_sq)
+            centrality = (4.0 - (abs(3.5 - to_f) + abs(3.5 - to_r))) / 4.0
+            d_opp = chess.square_distance(to_sq, opp_king) / 7.0 if opp_king else 1.0
+            d_own = chess.square_distance(to_sq, our_king) / 7.0 if our_king else 1.0
 
             feats = (
-                motif_flags
-                + [c.plan_alignment]
-                + [c.positional_eval]
-                + risk_onehot
-                + [float("capture" in c.tactical_motifs)]
-                + [float("check" in c.tactical_motifs)]
-                + [0.0]  # see_value
-            )
+                motif_flags  # 9
+                + [c.plan_alignment]  # 1
+                + [c.positional_eval]  # 1
+                + risk_onehot  # 4
+                + [float("capture" in c.tactical_motifs)]  # 1
+                + [float("check" in c.tactical_motifs)]  # 1
+                + [c.see_value / 900.0]  # 1
+                + piece_onehot  # 6
+                + [centrality]  # 1
+                + [d_opp]  # 1
+                + [d_own]  # 1
+                + [float(board.is_castling(c.move))]  # 1
+                + [0.0]  # opponent_mobility (skip at inference for speed)
+                + [0.0]  # pawn_structure_change (skip at inference)
+            )  # total = 30
             cand_feats[0, i] = torch.tensor(feats, dtype=torch.float32)
 
         return {
             "profile": p,
+            "profile_continuous": profile_cont,
             "plan_type": plan_type,
             "plan_activation": plan_act,
             "candidate_features": cand_feats,

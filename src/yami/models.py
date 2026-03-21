@@ -105,8 +105,9 @@ class AnnotatedCandidate:
     plan_alignment: float
     plan_name: str
     positional_eval: float
-    risk: str
-    narrative: str
+    see_value: int = 0
+    risk: str = "low"
+    narrative: str = ""
 
 
 @dataclass
