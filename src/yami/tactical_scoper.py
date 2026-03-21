@@ -35,13 +35,16 @@ def _detect_motifs(board: chess.Board, move: chess.Move) -> list[str]:
     """Detect tactical motifs for a move."""
     motifs: list[str] = []
 
-    # Capture detection
-    if board.is_capture(move):
+    # Pre-push checks (need original board state)
+    is_capture = board.is_capture(move)
+    if is_capture:
         motifs.append("capture")
+    if is_capture and _wins_material(board, move):
+        motifs.append("material_gain")
 
-    # Pre-move checks
     moving_piece = board.piece_at(move.from_square)
 
+    # Post-push checks (need resulting board state)
     board.push(move)
     try:
         if board.is_check():
@@ -54,8 +57,6 @@ def _detect_motifs(board: chess.Board, move: chess.Move) -> list[str]:
             motifs.append("pin")
         if _creates_discovered_attack(board, move):
             motifs.append("discovery")
-        if _wins_material(board, move):
-            motifs.append("material_gain")
         if _hangs_piece(board, move):
             motifs.append("hangs_piece")
     finally:
@@ -170,8 +171,10 @@ def _creates_discovered_attack(board: chess.Board, move: chess.Move) -> bool:
 
 
 def _wins_material(board: chess.Board, move: chess.Move) -> bool:
-    """Check if the move results in a net material gain."""
-    see = _static_exchange_eval_post(board, move)
+    """Check if the move results in a net material gain (captures only)."""
+    if not board.is_capture(move):
+        return False
+    see = _static_exchange_eval(board, move)
     return see > 50  # at least half a pawn advantage
 
 

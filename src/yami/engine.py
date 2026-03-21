@@ -115,6 +115,16 @@ class YamiEngine:
         # Layer 2: Tactical scoping
         scoped = scope_moves(board)
 
+        # Short-circuit: if checkmate exists, play it immediately
+        for m in scoped:
+            if "checkmate" in m.motifs:
+                return MoveDecision(
+                    move=m.move,
+                    source=DecisionSource.INFRASTRUCTURE_FALLBACK,
+                    legal_move_count=len(legal_moves),
+                    scoped_move_count=len(scoped),
+                )
+
         # Censors
         if self.use_censors:
             censored = apply_blunder_censor(scoped)
