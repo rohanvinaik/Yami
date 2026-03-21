@@ -26,7 +26,6 @@ import chess.engine
 
 from yami.engine import YamiEngine
 
-
 # Stockfish skill level to approximate ELO mapping
 # Based on community testing and Lichess calibration
 SKILL_TO_ELO = {

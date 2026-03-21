@@ -23,7 +23,6 @@ from yami.navigator import (
     NavigationVector,
     compute_navigation_vector,
     detect_anchors,
-    rank_candidates_by_navigation,
 )
 from yami.tactical_scoper import (
     apply_blunder_censor,
@@ -179,7 +178,7 @@ class YamiEngine:
         if not censored:
             censored = scoped
 
-        # Layer 5: 6-Bank Navigator (Wayfinder-style)
+        # Layer 5: Multi-Signal Coherence (Navigator + Strategy + Temporal + K-Lines)
         nav_vector = None
         if self.use_navigator:
             nav_vector = compute_navigation_vector(board)
@@ -189,57 +188,26 @@ class YamiEngine:
                 board, censored, nav_vector
             )
 
-            # Get temporal plan bias
-            plan_bias = {}
-            if self._temporal:
-                plan_bias = self._temporal.get_plan_bias()
-
-            # Score candidates by OTP alignment
-            nav_ranked = rank_candidates_by_navigation(
+            # Run coherence scoring across all signals
+            from yami.coherence import compute_coherence
+            coherence_result = compute_coherence(
                 board,
-                [(m.move, m) for m in censored],
+                [m.move for m in censored[:10]],  # top 10 candidates
                 nav_vector,
+                temporal=self._temporal,
+                klines=self._klines,
             )
 
-            # Apply plan bias to OTP scores
-            if plan_bias:
-                boosted = []
-                for move, otp, anchors in nav_ranked:
-                    bias_bonus = sum(plan_bias.values()) * 0.5
-                    boosted.append((move, otp + bias_bonus, anchors))
-                nav_ranked = sorted(boosted, key=lambda x: x[1], reverse=True)
-
-            # Reorder censored moves by navigation ranking
-            nav_move_order = {move: i for i, (move, _, _) in enumerate(nav_ranked)}
-            censored = sorted(
-                censored,
-                key=lambda m: nav_move_order.get(m.move, 999),
-            )
-
-        # Layer 5b: K-Line Memory check
-        if self._klines and nav_vector:
-            all_anchors: set[str] = set()
-            for m in censored[:5]:
-                all_anchors |= detect_anchors(board, m.move)
-
-            kline_matches = self._klines.query(
-                board, nav_vector, all_anchors, top_k=1
-            )
-            if kline_matches and kline_matches[0].match_score > 0.85:
-                kline = kline_matches[0]
-                # Try to play the K-line's first move
-                if kline.move_sequence:
-                    kline_san = kline.move_sequence[0]
-                    kline_move = parse_move(board, kline_san)
-                    if kline_move and is_legal(board, kline_move):
-                        return MoveDecision(
-                            move=kline_move,
-                            source=DecisionSource.KLINE_MEMORY,
-                            nav_vector=nav_vector,
-                            legal_move_count=len(legal_moves),
-                            scoped_move_count=len(scoped),
-                            censored_move_count=len(censored),
-                        )
+            # Reorder censored moves by coherence-weighted final score
+            if coherence_result.scored_moves:
+                coherence_order = {
+                    s.move: i
+                    for i, s in enumerate(coherence_result.scored_moves)
+                }
+                censored = sorted(
+                    censored,
+                    key=lambda m: coherence_order.get(m.move, 999),
+                )
 
         # Layers 5-6: Candidate filtering + annotation
         candidates, plan, profile = filter_and_annotate(
