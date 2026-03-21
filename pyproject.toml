@@ -10,10 +10,14 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+neural = [
+    "torch>=2.0",
+]
 dev = [
     "pytest>=8.0",
     "ruff>=0.4",
     "mypy>=1.10",
+    "torch>=2.0",
 ]
 
 [build-system]

@@ -31,6 +31,7 @@ class DecisionSource(Enum):
     ENDGAME_TABLEBASE = "endgame_tablebase"
     OPENING_BOOK = "opening_book"
     LLM_DECISION = "llm_decision"
+    NEURAL_DECISION = "neural_decision"
     INFRASTRUCTURE_FALLBACK = "infrastructure_fallback"
     NO_LEGAL_MOVES = "no_legal_moves"
 
@@ -55,17 +56,24 @@ class YamiEngine:
     def __init__(
         self,
         use_llm: bool = True,
+        use_neural: bool = False,
+        neural_checkpoint: str | None = None,
         use_opening_book: bool = True,
         use_endgame_tables: bool = True,
         use_censors: bool = True,
         max_candidates: int = 5,
     ):
         self.use_llm = use_llm
+        self.use_neural = use_neural
         self.use_opening_book = use_opening_book
         self.use_endgame_tables = use_endgame_tables
         self.use_censors = use_censors
         self.max_candidates = max_candidates
         self.state = GameState()
+        self._neural_decider = None
+        if use_neural and neural_checkpoint:
+            from yami.neural.inference import NeuralDecider
+            self._neural_decider = NeuralDecider(neural_checkpoint)
 
     def reset(self) -> None:
         """Reset the engine for a new game."""
@@ -152,12 +160,18 @@ class YamiEngine:
                 censored_move_count=len(censored),
             )
 
-        # Layer 7: LLM decision
-        if self.use_llm:
+        # Layer 7: Decision
+        if self.use_neural and self._neural_decider is not None:
+            chosen, _conf = self._neural_decider.decide(
+                board, candidates, plan, profile
+            )
+            source = DecisionSource.NEURAL_DECISION
+        elif self.use_llm:
             chosen = choose_move_sync(board, candidates, plan, profile)
+            source = DecisionSource.LLM_DECISION
         else:
-            # Infrastructure-only mode: use top candidate
             chosen = candidates[0].move
+            source = DecisionSource.INFRASTRUCTURE_FALLBACK
 
         # Layer 8: Legal move verification
         if chosen is not None and not is_legal(board, chosen):
@@ -166,11 +180,7 @@ class YamiEngine:
 
         return MoveDecision(
             move=chosen,
-            source=(
-                DecisionSource.LLM_DECISION
-                if self.use_llm
-                else DecisionSource.INFRASTRUCTURE_FALLBACK
-            ),
+            source=source,
             candidates=candidates,
             plan=plan,
             profile=profile,
