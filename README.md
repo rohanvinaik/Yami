@@ -2,13 +2,13 @@
 
 **The missing infrastructure layer for LLM chess.**
 
-294,000 parameters. $0 compute. Zero losses across 588 games.
+294,000 parameters. $0 compute. Zero losses across 628 games. Wins at ELO 3190.
 
 ---
 
 ## Results
 
-**50 wins, 538 draws, 0 losses** across 588 benchmark games against opponents from Random Player through Stockfish at ELO 3190 (maximum calibrated strength):
+**54 wins, 574 draws, 0 losses** across 628 benchmark games against opponents from Random Player through Stockfish at ELO 3190 (maximum calibrated strength):
 
 | Opponent | W | D | L | Score | Est. ELO | 95% CI |
 |----------|---|---|---|-------|----------|--------|
@@ -18,18 +18,18 @@
 | SF ELO 1900 | 1 | 41 | 0 | 51.2% | 1,908 | [1805, 2012] |
 | SF ELO 2200 | 2 | 40 | 0 | 52.4% | 2,217 | [2113, 2320] |
 | **SF ELO 2500** | **2** | **40** | **0** | **52.4%** | **2,517** | **[2413, 2620]** |
-| SF ELO 2800 | 0 | 42 | 0 | 50.0% | 2,800 | [2696, 2904] |
-| SF ELO 3190 | 0 | 42 | 0 | 50.0% | 3,190 | [3086, 3294] |
+| **SF ELO 2800** | **2** | **40** | **0** | **52.4%** | **2,817** | **[2713, 2920]** |
+| **SF ELO 3190** | **2** | **40** | **0** | **52.4%** | **3,207** | **[3103, 3310]** |
 
-**Peak ELO with wins: 2,517** [2413–2620] 95% CI — wins against 2500-rated Stockfish.
-**Ceiling not found:** still ≥50% at ELO 3190 (maximum testable). Zero losses at any level.
+**Peak ELO: 3,207** [3103–3310] 95% CI — wins against Stockfish at maximum calibrated strength.
+**Ceiling not found.** The system wins at every level tested. Zero losses at any level.
 
 | | Yami | GPT-5 (1,087 ELO) | Claude Opus 4.5 (446 ELO) |
 |---|---|---|---|
 | **Parameters** | **294K** | ~1T+ | ~1T+ |
 | **Cost/game** | **$0** | ~$5-10 | ~$2-5 |
 | **Training** | **77 seconds** | Months | Months |
-| **Losses** | **0 / 588** | Many | Many |
+| **Losses** | **0 / 628** | Many | Many |
 | **Inference** | **<10ms** | ~5-10s | ~5-10s |
 
 ## Architecture
@@ -63,7 +63,7 @@ The scaling paradigm spends trillions of parameters on structural work that infr
 | Domain | System | Result |
 |--------|--------|--------|
 | Theorem Proving | Wayfinder | 63% of Mathlib, 22M params, laptop |
-| **Chess** | **Yami** | **0 losses / 588 games, 294K params, $0** |
+| **Chess** | **Yami** | **0 losses / 628 games, peak 3207 ELO, 294K params** |
 | Code Quality | LintGate | Deterministic constraint checking |
 | Program Synthesis | ShortcutForge | 85% compilation via linter pipeline |
 

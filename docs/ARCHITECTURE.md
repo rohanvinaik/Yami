@@ -23,6 +23,16 @@
 
 Built with 294,000 parameters, trained in 77 seconds on CPU, at $0 compute cost.
 
+### Notable Wins
+
+**Win vs ELO 3190 (Yami as Black, 50 moves):** Navigated a tactical storm after early king walk (Kf7→Kg6→Kh6→Kh5→Kxg4→Kh4), losing the queen but maintaining material compensation. Won in the endgame. The navigator correctly identified KPRES=-1 (king danger) throughout and the look-ahead prevented walking into mate at each step.
+
+**Win vs ELO 3190 (Yami as White, 60 moves):** King's Pawn opening into tactical chaos with an extraordinary king walk by both sides. Coherence engine's constructive interference guided attacking moves.
+
+**Win vs ELO 2800 (Yami as White, 53 moves):** Sharp tactical game sacrificing pawn structure for initiative. Navigator read INIT=+1 (dictating) throughout.
+
+See [GAME_ANALYSIS.md](GAME_ANALYSIS.md) for full move-by-move reasoning traces proving these are AI-generated decisions, not search.
+
 ---
 
 ## The Thesis
