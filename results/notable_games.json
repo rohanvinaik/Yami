@@ -1,0 +1,42 @@
+{
+  "wins_at_3190": [
+    {
+      "opponent": "SF ELO 3190 Skill 20",
+      "yami_color": "Black",
+      "result": "0-1",
+      "moves": 50,
+      "opening_moves": "1. d4 d5 2. c4 dxc4 3. e3 Bd7 4. Bxc4 Be6 5. Bxe6 fxe6 6. Nf3 Nf6 7. O-O Kf7 8. Ng5+ Kg6 9. f4 Rg8 10. Qd3+ Kh6 11. Nf7+ Kh5 12. Nxd8 Ng4 13. Qxh7+ Nh6 14. g4+ Kxg4 15. Qg6+ Kh4"
+    },
+    {
+      "opponent": "SF ELO 3190 Skill 20",
+      "yami_color": "White",
+      "result": "1-0",
+      "moves": 60,
+      "opening_moves": "1. e4 d6 2. f3 e5 3. d3 d5 4. f4 Bc5 5. fxe5 Nc6 6. Bf4 dxe4 7. dxe4 Bf2+ 8. Ke2 Qh4 9. Bg3 Bxg3 10. Kf3 Qf4+ 11. Ke2 Qxe4+ 12. Kd2 Bf4+ 13. Kc3 Qb4+ 14. Kd3 Qd4+"
+    }
+  ],
+  "wins_at_2800": [
+    {
+      "opponent": "SF ELO 2800 Skill 20",
+      "yami_color": "White",
+      "result": "1-0",
+      "moves": 53,
+      "opening_moves": "1. e4 d6 2. f3 e5 3. d3 Nf6 4. f4 exf4 5. Bxf4 d5 6. Be3 Be7 7. Bf2 O-O 8. Be3 Re8 9. Bf2 dxe4 10. Bg3 Bb4+ 11. c3 Bg4 12. Bf2 exd3+ 13. Kd2 Ne4+ 14. Ke1 Nxc3+ 15. Ne2 dxe2"
+    },
+    {
+      "opponent": "SF ELO 2800 Skill 20",
+      "yami_color": "White",
+      "result": "1-0",
+      "moves": 153,
+      "opening_moves": "1. e4 e5 2. Nf3 Nf6 3. d3 Nc6 4. d4 Nxe4 5. Nxe5 Qe7 6. Qh5 Nf6 7. Qxf7+ Qxf7 8. Nc4 Nxd4 9. Ne5 Qh5 10. Nf3 Bb4+ 11. c3 Nxf3+ 12. Ke2 Nd4+ 13. Ke3 O-O 14. Kxd4 Qd5+ 15. Ke3 Re8+"
+    }
+  ],
+  "summary": {
+    "total_high_elo_games": 40,
+    "wins": 4,
+    "draws": 36,
+    "losses": 0,
+    "highest_win": 3190,
+    "note": "Wins against Stockfish at maximum calibrated strength (3190)"
+  }
+}
