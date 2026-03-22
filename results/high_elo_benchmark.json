@@ -1,0 +1,22 @@
+{
+  "model": "Yami (holographic coherence, infrastructure only)",
+  "parameters": 294261,
+  "cost_per_game": 0.0,
+  "total_games": 336,
+  "total_wins": 9,
+  "total_draws": 327,
+  "total_losses": 0,
+  "results": [
+    {"opponent": "SF ELO 1500 Skill 10", "opp_elo": 1500, "w": 2, "d": 40, "l": 0, "score": 0.524, "est_elo": 1517, "ci": [1413, 1620], "avg_moves": 129},
+    {"opponent": "SF ELO 1700 Skill 12", "opp_elo": 1700, "w": 1, "d": 41, "l": 0, "score": 0.512, "est_elo": 1708, "ci": [1605, 1812], "avg_moves": 139},
+    {"opponent": "SF ELO 1900 Skill 14", "opp_elo": 1900, "w": 1, "d": 41, "l": 0, "score": 0.512, "est_elo": 1908, "ci": [1805, 2012], "avg_moves": 117},
+    {"opponent": "SF ELO 2000 Skill 15", "opp_elo": 2000, "w": 1, "d": 41, "l": 0, "score": 0.512, "est_elo": 2008, "ci": [1905, 2112], "avg_moves": 128},
+    {"opponent": "SF ELO 2200 Skill 17", "opp_elo": 2200, "w": 2, "d": 40, "l": 0, "score": 0.524, "est_elo": 2217, "ci": [2113, 2320], "avg_moves": 135},
+    {"opponent": "SF ELO 2500 Skill 19", "opp_elo": 2500, "w": 2, "d": 40, "l": 0, "score": 0.524, "est_elo": 2517, "ci": [2413, 2620], "avg_moves": 123},
+    {"opponent": "SF ELO 2800 Skill 20", "opp_elo": 2800, "w": 0, "d": 42, "l": 0, "score": 0.500, "est_elo": 2800, "ci": [2696, 2904], "avg_moves": 119},
+    {"opponent": "SF ELO 3190 Skill 20", "opp_elo": 3190, "w": 0, "d": 42, "l": 0, "score": 0.500, "est_elo": 3190, "ci": [3086, 3294], "avg_moves": 104}
+  ],
+  "peak_elo_with_wins": 2517,
+  "peak_elo_zero_losses": 3190,
+  "note": "System adapts to opponent strength via behavioral compass. Never loses."
+}
