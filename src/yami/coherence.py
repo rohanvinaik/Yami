@@ -300,17 +300,9 @@ def _compute_look_ahead(board: chess.Board, move: chess.Move) -> float:
         for opp_move in board.legal_moves:
             board.push(opp_move)
             if board.is_checkmate():
-                board.pop()
-                board.pop()
+                board.pop()  # pop opp_move; finally will pop our move
                 return -8.0  # opponent can mate after our move
             board.pop()
-
-        # Reward moves that restrict opponent mobility
-        opp_mobility = board.legal_moves.count()
-        if opp_mobility < 8:
-            return 2.0  # opponent is very cramped — good
-        if opp_mobility < 15:
-            return 0.5
 
         return 0.0  # neutral — no blunders, no special advantage
 

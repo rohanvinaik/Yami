@@ -133,7 +133,7 @@ def _match_score(
 ) -> float:
     """Score how well a K-line matches the current position."""
     # Navigation vector similarity (inverse Hamming)
-    hamming = sum(a != b for a, b in zip(query_nv, entry.nav_vector, strict=False))
+    hamming = sum(a != b for a, b in zip(query_nv, entry.nav_vector))
     nav_score = max(0, 6 - hamming) / 6.0  # 1.0 = perfect match
 
     # Anchor overlap (Jaccard)

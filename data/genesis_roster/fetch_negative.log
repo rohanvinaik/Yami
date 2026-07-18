@@ -1,0 +1,40 @@
+=== LOSSS → /Users/rohanvinaik/Projects/Yami/data/genesis_roster/pgn_losses (target 50/player) ===
+  [OK ] Tal            (attacker       ) target=Mikhail_Tal losss=50
+  [OK ] Kasparov       (attacker       ) target=Garry_Kasparov losss=50
+  [OK ] Morphy         (attacker       ) target=Paul_Morphy losss=26
+  [OK ] Capablanca     (technician     ) target=Jose_Raul_Capablanca losss=50
+  [OK ] Karpov         (defender       ) target=Anatoly_Karpov losss=49
+  [OK ] Petrosian      (defender       ) target=Tigran_V_Petrosian losss=50
+  [OK ] Fischer        (universal      ) target=Robert_James_Fischer losss=49
+  [THIN] Nimzowitsch    (hypermodern    ) target=None losss=0
+  [OK ] Alekhine       (deep-tactics   ) target=Alexander_Alekhine losss=50
+  [OK ] Polgar         (initiator      ) target=Judit_Polgar losss=50
+  [OK ] Korchnoi       (counter-puncher) target=Viktor_Korchnoi losss=50
+  [OK ] Lasker         (swindler       ) target=Emanuel_Lasker losss=50
+  [OK ] Marshall       (swindler       ) target=Frank_James_Marshall losss=50
+  [THIN] Smyslov        (harmonious     ) target=None losss=0
+  [OK ] Rubinstein     (harmonious     ) target=Akiba_Rubinstein losss=50
+  [OK ] Nezhmetdinov   (unorthodox     ) target=Rashid_Nezhmetdinov losss=50
+  [OK ] Rapport        (unorthodox     ) target=Richard_Rapport losss=50
+  [OK ] Caruana        (engine         ) target=Fabiano_Caruana losss=50
+  [OK ] So             (engine         ) target=Wesley_So losss=50
+=== DRAWS → /Users/rohanvinaik/Projects/Yami/data/genesis_roster/pgn_draws (target 50/player) ===
+  [OK ] Tal            (attacker       ) target=Mikhail_Tal draws=50
+  [OK ] Kasparov       (attacker       ) target=Garry_Kasparov draws=50
+  [OK ] Morphy         (attacker       ) target=Paul_Morphy draws=26
+  [OK ] Capablanca     (technician     ) target=Jose_Raul_Capablanca draws=50
+  [OK ] Karpov         (defender       ) target=Anatoly_Karpov draws=49
+  [OK ] Petrosian      (defender       ) target=Tigran_V_Petrosian draws=50
+  [OK ] Fischer        (universal      ) target=Robert_James_Fischer draws=50
+  [THIN] Nimzowitsch    (hypermodern    ) target=None draws=0
+  [OK ] Alekhine       (deep-tactics   ) target=Alexander_Alekhine draws=47
+  [OK ] Polgar         (initiator      ) target=Judit_Polgar draws=50
+  [OK ] Korchnoi       (counter-puncher) target=Viktor_Korchnoi draws=50
+  [OK ] Lasker         (swindler       ) target=Emanuel_Lasker draws=50
+  [OK ] Marshall       (swindler       ) target=Frank_James_Marshall draws=43
+  [THIN] Smyslov        (harmonious     ) target=None draws=0
+  [OK ] Rubinstein     (harmonious     ) target=Akiba_Rubinstein draws=50
+  [OK ] Nezhmetdinov   (unorthodox     ) target=Rashid_Nezhmetdinov draws=50
+  [OK ] Rapport        (unorthodox     ) target=Richard_Rapport draws=50
+  [OK ] Caruana        (engine         ) target=Fabiano_Caruana draws=50
+  [OK ] So             (engine         ) target=Wesley_So draws=50

@@ -1,0 +1,14 @@
+  skip (done): Prophylaxis (chess)
+  UNGROUNDED core span, DROP: Overprotection (chess)
+  UNGROUNDED core span, DROP: Blockade (chess)
+  UNGROUNDED core span, DROP: Outpost (chess)
+  [  11s] Isolated pawn: isolates -> weak  | break: 'when the game reaches the endgame'
+  [  11s] Pawn structure: avoids -> weak  | break: 'but there are exceptions'
+  [  14s] Passed pawn: advances -> strong  | break: 'opposing rook can get behind the pawn'
+  [  11s] Minority attack: advances -> weak  | break: 'advancement on the side of the castled king'
+  UNGROUNDED core span, DROP: Weak square
+  [   9s] Open file: occupies -> strong  | break: None
+  [  17s] Undermining (chess): undermines -> exposed  | break: 'Black can only save the knight with 2...Rxb5 3.Rxb5, leaving White an exchange up instead of just a pawn'
+  [  11s] Fianchetto: develops -> active  | break: 'if the fianchettoed bishop can be exchanged'
+
+ledger: /Users/rohanvinaik/Projects/Yami/data/genesis_roster/u3_atoms.jsonl

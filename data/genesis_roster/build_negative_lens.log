@@ -1,0 +1,139 @@
+  Alekhine        50 losses · 18 residual frames ·  0 tier-2 failure derivations
+  Capablanca      50 losses · 20 residual frames ·  0 tier-2 failure derivations
+[07/13/26 10:54:51] ERROR    illegal san: 'Nab3' in                  pgn.py:1267
+                             rnbqkbnr/ppp1p2p/3p2p1/5p2/5PP1/3P4/PPP            
+                             1P2P/RNBQKBNR w KQkq - 0 4 while                   
+                             parsing <Game at 0x108560890                       
+                             ('Opponent' vs. 'Caruana', '????.??.??'            
+                             at '?')>                                           
+                    ERROR    illegal san: 'Nac2' in                  pgn.py:1267
+                             rnb1kbnr/p1qpp2p/1pp3p1/5p2/Q1P2P2/3P2P            
+                             1/PP2P2P/RNB1KBNR w KQkq - 0 6 while               
+                             parsing <Game at 0x106c82790                       
+                             ('Opponent' vs. 'Caruana', '????.??.??'            
+                             at '?')>                                           
+[07/13/26 10:54:54] ERROR    illegal san: 'Bc2' in                   pgn.py:1267
+                             rnbqkbnr/pp1ppppp/2p5/8/2P5/8/PP1PPPPP/            
+                             RNBQKBNR w KQkq - 0 2 while parsing                
+                             <Game at 0x107c7ae90 ('Opponent' vs.               
+                             'Caruana', '????.??.??' at '?')>                   
+                    ERROR    illegal san: 'Be5' in                   pgn.py:1267
+                             rnbqkb1r/p2ppppp/1p3n2/2p5/1PP5/5N2/P2P            
+                             PPPP/RNBQKB1R w KQkq - 0 4 while                   
+                             parsing <Game at 0x10917d310                       
+                             ('Opponent' vs. 'Caruana', '????.??.??'            
+                             at '?')>                                           
+[07/13/26 10:54:55] ERROR    illegal san: 'Nhf2' in                  pgn.py:1267
+                             rnbqkbnr/pp1pp2p/2p3p1/5p2/5P2/2P3P1/PP            
+                             1PP2P/RNBQKBNR w KQkq - 0 4 while                  
+                             parsing <Game at 0x108530f90                       
+                             ('Opponent' vs. 'Caruana', '????.??.??'            
+                             at '?')>                                           
+                    ERROR    illegal san: 'Nd6' in                   pgn.py:1267
+                             rnbqkbnr/1pppp2p/6p1/p4p2/P4P2/2N3P1/1P            
+                             PPP2P/R1BQKBNR b KQkq - 1 4 while                  
+                             parsing <Game at 0x109119f50                       
+                             ('Opponent' vs. 'Caruana', '????.??.??'            
+                             at '?')>                                           
+                    ERROR    illegal san: 'Nd3' in                   pgn.py:1267
+                             rnbqkbnr/p1p1pppp/8/1p1p4/3P4/1P6/P1P1P            
+                             PPP/RNBQKBNR w KQkq - 0 3 while parsing            
+                             <Game at 0x1085a3750 ('Opponent' vs.               
+                             'Caruana', '????.??.??' at '?')>                   
+                    ERROR    illegal san: 'Ne6' in                   pgn.py:1267
+                             rnbqkbnr/p2ppppp/1p6/8/2PQ4/1P6/P3PPPP/            
+                             RNB1KBNR b KQkq - 0 4 while parsing                
+                             <Game at 0x10849f050 ('Opponent' vs.               
+                             'Caruana', '????.??.??' at '?')>                   
+  Caruana         46 losses · 21 residual frames ·  0 tier-2 failure derivations
+  Fischer         49 losses · 22 residual frames ·  0 tier-2 failure derivations
+  Karpov          49 losses · 19 residual frames ·  0 tier-2 failure derivations
+[07/13/26 11:31:00] ERROR    illegal san: 'Bb7' in                   pgn.py:1267
+                             rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RN            
+                             BQKBNR b KQkq - 0 1 while parsing <Game            
+                             at 0x10911b7d0 ('Opponent' vs.                     
+                             'Kasparov', '????.??.??' at '?')>                  
+  Kasparov        49 losses · 17 residual frames ·  0 tier-2 failure derivations
+[07/13/26 11:42:52] ERROR    invalid san: '1-0' while parsing <Game  pgn.py:1267
+                             at 0x1084fdf10 ('Opponent' vs.                     
+                             'Korchnoi', '????.??.??' at '?')>                  
+  Korchnoi        39 losses · 22 residual frames ·  0 tier-2 failure derivations
+[07/13/26 11:51:23] ERROR    illegal san: 'Be5' in                   pgn.py:1267
+                             rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQ            
+                             KBNR w KQkq - 0 1 while parsing <Game              
+                             at 0x1082fba50 ('Opponent' vs.                     
+                             'Lasker', '????.??.??' at '?')>                    
+  Lasker          49 losses · 22 residual frames ·  0 tier-2 failure derivations
+  Marshall        50 losses · 23 residual frames ·  0 tier-2 failure derivations
+[07/13/26 12:17:59] ERROR    illegal san: 'Rc1' in                   pgn.py:1267
+                             r1bq1rk1/ppp1b1pp/2n2n2/3ppp2/8/1P2P1PN            
+                             /PBPP1PBP/RN1Q1RK1 w - - 6 8 while                 
+                             parsing <Game at 0x10854b810 ('Morphy'             
+                             vs. 'Opponent', '????.??.??' at '?')>              
+[07/13/26 12:18:00] ERROR    illegal san: 'Rac1' in                  pgn.py:1267
+                             r2q1kn1/2p2pp1/1bpp3r/p6p/P2PP3/5Q1P/1B            
+                             3PP1/RN3RK1 w - - 0 16 while parsing               
+                             <Game at 0x10929a690 ('Morphy' vs.                 
+                             'Opponent', '????.??.??' at '?')>                  
+                    ERROR    illegal san: 'Rae1' in                  pgn.py:1267
+                             r4rk1/ppqb1ppp/1b3n2/2p1pP2/2B1P3/B1P4P            
+                             /P1Q3P1/RN3RK1 w - - 1 15 while parsing            
+                             <Game at 0x1091e8e50 ('Morphy' vs.                 
+                             'Opponent', '????.??.??' at '?')>                  
+                    ERROR    illegal san: 'Rac1' in                  pgn.py:1267
+                             2kr4/pp2bnQ1/5n1r/2p5/3P2p1/BP1P4/P1q3P            
+                             P/RN2R2K w - - 2 24 while parsing <Game            
+                             at 0x109338750 ('Morphy' vs.                       
+                             'Opponent', '????.??.??' at '?')>                  
+                    ERROR    illegal san: 'Rae1' in                  pgn.py:1267
+                             8/pp1k2pp/2r5/4rP2/1P2n3/3p2P1/P2P3P/RN            
+                             3R1K w - - 0 29 while parsing <Game at             
+                             0x10935fb90 ('Morphy' vs. 'Opponent',              
+                             '????.??.??' at '?')>                              
+                    ERROR    illegal san: 'Rae1' in                  pgn.py:1267
+                             r1b2k1r/ppp2Bpp/1b1p1n2/4q3/4P3/BQP5/P4            
+                             PPP/RN3RK1 w - - 0 13 while parsing                
+                             <Game at 0x10932c490 ('Morphy' vs.                 
+                             'Opponent', '????.??.??' at '?')>                  
+                    ERROR    illegal san: 'Rab1' in                  pgn.py:1267
+                             1rb2rk1/p3bppp/2pp1n2/q7/2B5/8/PBP1QPPP            
+                             /RN2R1K1 w - - 4 15 while parsing <Game            
+                             at 0x1084cdc90 ('Morphy' vs.                       
+                             'Opponent', '????.??.??' at '?')>                  
+[07/13/26 12:18:02] ERROR    illegal san: 'Rad1' in                  pgn.py:1267
+                             rn1q1rk1/pp2bppp/2p2n2/8/2PP1Bb1/5N2/PP            
+                             Q1B1PP/RN3RK1 w - - 3 11 while parsing             
+                             <Game at 0x10933d250 ('Morphy' vs.                 
+                             'Opponent', '????.??.??' at '?')>                  
+  Morphy          26 losses · 20 residual frames ·  0 tier-2 failure derivations
+  Nezhmetdinov    50 losses · 21 residual frames ·  0 tier-2 failure derivations
+  Petrosian       50 losses · 19 residual frames ·  0 tier-2 failure derivations
+  Polgar          50 losses · 17 residual frames ·  0 tier-2 failure derivations
+[07/13/26 13:02:15] ERROR    illegal san: 'Nd6' in                   pgn.py:1267
+                             rnbqkbnr/ppppp2p/6p1/5p2/5P2/2N3P1/PPPP            
+                             P2P/R1BQKBNR b KQkq - 1 3 while parsing            
+                             <Game at 0x1092fb990 ('Opponent' vs.               
+                             'Rapport', '????.??.??' at '?')>                   
+                    ERROR    illegal san: 'Bf4' in                   pgn.py:1267
+                             rnbqkbnr/pp1pppp1/8/2p3P1/2P4p/1P6/P2PP            
+                             P1P/RNBQKBNR b KQkq - 0 4 while parsing            
+                             <Game at 0x1092f8350 ('Opponent' vs.               
+                             'Rapport', '????.??.??' at '?')>                   
+                    ERROR    illegal san: 'Nab3' in                  pgn.py:1267
+                             rnbqkbnr/pp1p2pp/2p2p2/2P5/3p4/5P2/PP2P            
+                             1PP/RNBQKBNR w KQkq - 0 5 while parsing            
+                             <Game at 0x109309610 ('Opponent' vs.               
+                             'Rapport', '????.??.??' at '?')>                   
+                    ERROR    illegal san: 'Ne3' in                   pgn.py:1267
+                             rnbqkb1r/pp1ppppp/5n2/2p5/2P5/1P6/P2PPP            
+                             PP/RNBQKBNR w KQkq - 1 3 while parsing             
+                             <Game at 0x108482ed0 ('Opponent' vs.               
+                             'Rapport', '????.??.??' at '?')>                   
+  Rapport         49 losses · 20 residual frames ·  0 tier-2 failure derivations
+  Rubinstein      50 losses · 22 residual frames ·  0 tier-2 failure derivations
+[07/13/26 13:26:54] ERROR    illegal san: 'Nd6' in                   pgn.py:1267
+                             r1bqk1nr/pp1p1pbp/2n3p1/2p1p3/P1B1P3/2P            
+                             P1N2/1P3PPP/RNBQK2R b KQkq - 0 6 while             
+                             parsing <Game at 0x1093fa010                       
+                             ('Opponent' vs. 'So', '????.??.??' at              
+                             '?')>                                              

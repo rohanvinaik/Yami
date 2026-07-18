@@ -1,0 +1,6 @@
+BASELINE (no learned censors):
+  baseline : 0W 2D 2L · avg 42 plies
+LEARN from Yami's own losses:
+  mined 18 negative examples from 2 losses
+IMPROVED (with learned censors):
+  improved : 0W 0D 4L · avg 44 plies

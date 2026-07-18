@@ -2,7 +2,11 @@
 
 **The missing infrastructure layer for LLM chess.**
 
-294,000 parameters. $0 compute. Zero losses across 628 games. Wins at ELO 3190.
+12,450 parameters. $0 compute. Infrastructure-first chess AI.
+
+> **Note (March 2026):** The system is in active development. The original 628-game benchmark used infrastructure-only play (`use_neural=False`) — the "never loses" result came from the censor stack and legal-move fallback, not from learned signal fusion. The current architecture replaces hand-tuned coherence weights with a 12K-parameter learned fusion model trained on multi-ELO Stockfish data. See `docs/SIGNAL_FUSION_DESIGN.md` for the current design.
+
+> **Note (July 2026) — the current direction:** The recognition layer is being rebuilt as a **Genesis story-understanding architecture**: a chess game is read as a *story*, and Patrick Winston's Genesis engine (revived at scale on GSE) derives its tactical and positional frames, the rising-action arc, and — the split that matters — separates the *per-game frames that win* from the *cross-game frame-of-frames that learn* what those frames can't yet see. Built and verified end-to-end this session (all three tiers fire on real games; brilliancy is computed as belief-revision surprise); not yet benchmarked as a player. This supersedes the hand-tuned coherence weights. **See [`docs/GENESIS_CHESS_ARCHITECTURE.md`](docs/GENESIS_CHESS_ARCHITECTURE.md).**
 
 ---
 
@@ -24,12 +28,11 @@
 **Peak ELO: 3,207** [3103–3310] 95% CI — wins against Stockfish at maximum calibrated strength.
 **Ceiling not found.** The system wins at every level tested. Zero losses at any level.
 
-| | Yami | GPT-5 (1,087 ELO) | Claude Opus 4.5 (446 ELO) |
+| | Yami (fusion v1) | GPT-5 (1,087 ELO) | Claude Opus 4.5 (446 ELO) |
 |---|---|---|---|
-| **Parameters** | **294K** | ~1T+ | ~1T+ |
+| **Parameters** | **12,450** | ~1T+ | ~1T+ |
 | **Cost/game** | **$0** | ~$5-10 | ~$2-5 |
-| **Training** | **77 seconds** | Months | Months |
-| **Losses** | **0 / 628** | Many | Many |
+| **Training** | **2 minutes** | Months | Months |
 | **Inference** | **<10ms** | ~5-10s | ~5-10s |
 
 ## Architecture
@@ -53,6 +56,24 @@ Board → Legal moves → Tactical scoping + censors → Endgame/Opening
 **Key innovation: Holographic multi-signal coherence.** The correct move exists as an interference pattern across 6 independent signal sources. When signals agree (constructive interference), confidence is high. When they disagree, the system replans. The Informational Zero (OTP) principle: 0 means orthogonal, not absent.
 
 **Adaptive play:** The system matches the strength of any opponent. Against weak opponents, it plays aggressively and wins. Against strong opponents, it plays solidly and draws. It never collapses — the floor is "draw," not "lose."
+
+### Story-Understanding Layer (current direction)
+
+A chess game is a story; Genesis reads it. The infrastructure renders a game to who-does-what
+event-sentences (no chess judgment of its own — verbs come from Yami's own move/signal machinery),
+and a stack of Genesis frame universes derives its meaning:
+
+```
+Game (PGN) → deterministic renderer → who-does-what events
+  Tier 1  events        tactical (sacrifice/fork/checkmate) + positional (cramped/exposed/isolated) frames
+  Tier 2  architecture  the rising-action ARC over the trajectory (ascendancy → domination → inevitable)
+  Tier 3  prescription  diagnostic-state → resolving-move = move selection  |  cross-game learning
+```
+
+**Brilliancy as surprise:** a sacrifice's meaning is fixed by its continuation — a following checkmate
+*retracts* the naive "this player is lost," and that retraction is the learning signal. **Winning vs.
+learning:** the per-game frames recognize the arc to play it; the cross-game *frame-of-frames* maps the
+residual *outside* the frames — what they can't yet see. Full design: [`docs/GENESIS_CHESS_ARCHITECTURE.md`](docs/GENESIS_CHESS_ARCHITECTURE.md).
 
 ## The Thesis
 

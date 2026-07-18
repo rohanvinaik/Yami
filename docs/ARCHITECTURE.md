@@ -3,6 +3,11 @@
 *Infrastructure-first chess through holographic multi-signal coherence.*
 *294K parameters. $0 compute. Zero losses across 588 games up to ELO 3190.*
 
+> **See also:** [`GENESIS_CHESS_ARCHITECTURE.md`](GENESIS_CHESS_ARCHITECTURE.md) — the story-understanding
+> layer: a chess game read as a Genesis story (tactical + positional frames → rising-action arc →
+> prescriptive move), with brilliancy-as-surprise and the per-game-frames (winning) vs frame-of-frames
+> (learning) split. The active development direction; supersedes the hand-tuned coherence weights below.
+
 ## The Result
 
 **50 wins, 538 draws, 0 losses** across 588 benchmark games against opponents from Random Player through Stockfish at ELO 3190 (maximum calibrated strength). The system is unbeatable — it either wins or draws at every level tested.

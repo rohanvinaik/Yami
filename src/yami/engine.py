@@ -24,6 +24,7 @@ from yami.navigator import (
     compute_navigation_vector,
     detect_anchors,
 )
+from yami.coherence import compute_coherence
 from yami.tactical_scoper import (
     apply_blunder_censor,
     apply_repetition_censor,
@@ -68,6 +69,7 @@ class YamiEngine:
         self,
         use_llm: bool = True,
         use_neural: bool = False,
+        use_progressive: bool = False,
         neural_checkpoint: str | None = None,
         neural_config: object | None = None,
         use_opening_book: bool = True,
@@ -83,6 +85,7 @@ class YamiEngine:
     ):
         self.use_llm = use_llm
         self.use_neural = use_neural
+        self.use_progressive = use_progressive
         self.use_opening_book = use_opening_book
         self.use_endgame_tables = use_endgame_tables
         self.use_censors = use_censors
@@ -91,6 +94,21 @@ class YamiEngine:
         self.use_temporal = use_temporal
         self.max_candidates = max_candidates
         self.state = GameState()
+
+        # Progressive revelation engine (replaces flat pipeline when enabled)
+        self._progressive = None
+        if use_progressive:
+            from yami.progressive_engine import ProgressiveRevealEngine
+            self._progressive = ProgressiveRevealEngine(
+                use_opening_book=use_opening_book,
+                use_endgame_tables=use_endgame_tables,
+                use_gm_patterns=use_gm_patterns,
+                use_klines=use_klines,
+                use_neural=use_neural,
+                neural_checkpoint=neural_checkpoint,
+                kline_db_path=kline_db_path,
+                gm_db_path=gm_db_path,
+            )
 
         # Learned censors (negative learning)
         from yami.negative_learning import create_default_censors
@@ -137,6 +155,23 @@ class YamiEngine:
         """Run the full Yami pipeline and decide on a move."""
         if board is None:
             board = self.state.board
+
+        # Progressive revelation engine (multi-scale)
+        if self._progressive is not None:
+            pd = self._progressive.decide(board)
+            return MoveDecision(
+                move=pd.move,
+                source=DecisionSource(pd.source.value.replace("scale_0_censor", "infrastructure_fallback")
+                                      .replace("scale_1_tactical", "infrastructure_fallback")
+                                      .replace("scale_2_positional", "infrastructure_fallback")
+                                      .replace("scale_3_coherence", "infrastructure_fallback")
+                                      .replace("scale_4_temporal", "infrastructure_fallback")
+                                      .replace("scale_5_neural", "neural_decision")
+                                      ) if pd.source.value not in ("endgame_tablebase", "opening_book")
+                    else DecisionSource(pd.source.value),
+                nav_vector=pd.nav_vector,
+                legal_move_count=pd.legal_move_count,
+            )
 
         # Layer 1: Legal move generation
         legal_moves = generate_legal_moves(board)
@@ -202,7 +237,6 @@ class YamiEngine:
             )
 
             # Run coherence scoring across all signals
-            from yami.coherence import compute_coherence
             la_weight = self._opponent_profiler.profile.look_ahead_weight()
             coherence_result = compute_coherence(
                 board,

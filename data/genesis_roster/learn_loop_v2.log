@@ -1,0 +1,10 @@
+learned 4 risk weights from 6 disasters
+
+TARGETED — at each learned trap: did the overlay re-prioritize to a SAFER move?
+  [EXPLOIT_WEAKNESS] theory=Nxf7(-401cp) → learned=Nxc6(-483cp)  worse
+  [FORTIFY] theory=Bh4(-752cp) → learned=Kf3(-681cp)  SAFER ✓
+  [FORTIFY] theory=Bg5(-773cp) → learned=Kh3(-9997cp)  worse
+  [FORTIFY] theory=Bh4(-953cp) → learned=Kf3(-898cp)  SAFER ✓
+  [FORTIFY] theory=Bg5(-9995cp) → learned=Kf3(-878cp)  SAFER ✓
+
+re-prioritized 5/5, of which 3 to a Stockfish-SAFER move

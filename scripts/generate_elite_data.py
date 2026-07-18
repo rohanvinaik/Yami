@@ -46,7 +46,7 @@ def generate_critical_positions(sf, num_positions, label_oracle):
     the evaluation changes by >200cp in 3-4 moves — these are the
     turning points where one specific move creates decisive advantage.
     """
-    print("  [Source 1] Critical positions from SF self-play...")
+    print("  [Source 1] Critical positions from SF self-play...", flush=True)
     examples = []
     games = 0
 
@@ -56,16 +56,16 @@ def generate_critical_positions(sf, num_positions, label_oracle):
         moves = []
         games += 1
 
-        # Play a game at high depth
+        # Play a game at moderate depth (lower = more tactical errors = more swings)
         for _ in range(200):
             if board.is_game_over():
                 break
-            result = sf.play(board, chess.engine.Limit(depth=12, time=0.15))
+            result = sf.play(board, chess.engine.Limit(depth=6, time=0.05))
             move = result.move
             if move is None:
                 break
 
-            # Get eval
+            # Get eval at higher depth to detect true swings
             info = sf.analyse(board, chess.engine.Limit(depth=10))
             score = info.get("score")
             cp = 0
@@ -80,7 +80,7 @@ def generate_critical_positions(sf, num_positions, label_oracle):
         # Find eval swing positions (turning points)
         for i in range(3, len(evals)):
             swing = abs(evals[i] - evals[i - 3])
-            if swing > 200:  # >2 pawn swing in 3 moves
+            if swing > 100:  # >1 pawn swing in 3 moves
                 # Reconstruct position at the turning point
                 replay = chess.Board()
                 for m in moves[:i - 2]:
@@ -92,8 +92,8 @@ def generate_critical_positions(sf, num_positions, label_oracle):
                     if len(examples) >= num_positions:
                         break
 
-        if games % 10 == 0:
-            print(f"    {len(examples)}/{num_positions} (games={games})")
+        if games % 5 == 0:
+            print(f"    {len(examples)}/{num_positions} (games={games})", flush=True)
 
     return examples
 
@@ -106,7 +106,7 @@ def generate_adversarial_positions(sf, num_positions, label_oracle):
     perspective), extract the position and label with SF's move.
     This teaches the model "here's what you missed."
     """
-    print("  [Source 2] Adversarial positions (Yami vs SF 2000)...")
+    print("  [Source 2] Adversarial positions (Yami vs SF 2000)...", flush=True)
     examples = []
     games = 0
 
@@ -167,7 +167,7 @@ def generate_adversarial_positions(sf, num_positions, label_oracle):
             board.push(move)
 
         if games % 5 == 0:
-            print(f"    {len(examples)}/{num_positions} (games={games})")
+            print(f"    {len(examples)}/{num_positions} (games={games})", flush=True)
 
     return examples
 
@@ -178,7 +178,7 @@ def generate_endgame_positions(sf, num_positions, label_oracle):
     Generate positions with clear material advantages and label with
     the winning technique. The model needs to learn CONVERSION.
     """
-    print("  [Source 3] Endgame conversion positions...")
+    print("  [Source 3] Endgame conversion positions...", flush=True)
     examples = []
 
     # Common endgame types with material advantage
@@ -310,31 +310,46 @@ def main():
     sf = chess.engine.SimpleEngine.popen_uci("stockfish")
     label_oracle = StockfishOracle(depth=15, time_limit=0.15)
 
+    # Crash-safe: write incrementally to a partial file, merge at end
+    partial_path = Path(args.output).with_suffix(".partial.jsonl")
+
     try:
         t0 = time.time()
 
-        # Source 1: Critical positions
+        # Source 1: Critical positions (write after each batch)
         critical = generate_critical_positions(sf, args.critical, label_oracle)
+        save_dataset(critical, partial_path)
+        print(f"  [checkpoint] {len(critical)} critical → {partial_path}")
 
-        # Source 2: Adversarial positions
+        # Source 2: Adversarial positions (append)
         adversarial = generate_adversarial_positions(
             sf, args.adversarial, label_oracle
         )
+        _append_dataset(adversarial, partial_path)
+        print(f"  [checkpoint] +{len(adversarial)} adversarial → {partial_path}")
 
-        # Source 3: Endgame positions
+        # Source 3: Endgame positions (append)
         endgame = generate_endgame_positions(sf, args.endgame, label_oracle)
+        _append_dataset(endgame, partial_path)
+        print(f"  [checkpoint] +{len(endgame)} endgame → {partial_path}")
 
-        # Combine and shuffle
-        all_examples = critical + adversarial + endgame
+        # Load all, shuffle, split train/eval
+        import json
+        all_examples = []
+        with open(partial_path) as f:
+            for line in f:
+                all_examples.append(json.loads(line))
         random.shuffle(all_examples)
 
-        # Split train/eval (90/10)
         split = int(len(all_examples) * 0.9)
         train = all_examples[:split]
         eval_set = all_examples[split:]
 
         save_dataset(train, Path(args.output))
         save_dataset(eval_set, Path(args.eval_output))
+
+        # Clean up partial file
+        partial_path.unlink(missing_ok=True)
 
         elapsed = time.time() - t0
         print(f"\n=== Done in {elapsed:.0f}s ===")
@@ -346,6 +361,13 @@ def main():
     finally:
         sf.quit()
         label_oracle.close()
+
+
+def _append_dataset(examples, path: Path) -> None:
+    """Append examples to an existing JSONL file (same format as save_dataset)."""
+    with open(path, "a") as f:
+        for ex in examples:
+            f.write(ex.to_json() + "\n")
 
 
 if __name__ == "__main__":

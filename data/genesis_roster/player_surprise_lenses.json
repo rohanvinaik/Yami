@@ -1,0 +1,467 @@
+{
+  "_scores": {
+    "loss_style": {
+      "fine": [
+        4,
+        19
+      ],
+      "coarse": [
+        12,
+        18
+      ]
+    },
+    "mistake": {
+      "fine": [
+        4,
+        19
+      ],
+      "coarse": [
+        9,
+        18
+      ]
+    },
+    "win_baseline": {
+      "coarse": 0.78,
+      "fine": 0.0
+    }
+  },
+  "lenses": {
+    "Alekhine": {
+      "style": "deep-tactics",
+      "coarse": "dyn",
+      "loss_profile": {
+        "captures|pawn": 185,
+        "develops|piece": 227,
+        "captures|knight": 81,
+        "restrains|opponent": 430,
+        "defends|king": 54,
+        "occupies|file": 149,
+        "infiltrates|rank": 192,
+        "captures|rook": 52,
+        "checks|king": 80,
+        "captures|queen": 25,
+        "pins|piece": 139,
+        "captures|bishop": 71,
+        "forks|piece": 12,
+        "isolates|pawn": 42,
+        "exposes|king": 19,
+        "coordinates|rooks": 53,
+        "weakens|structure": 6
+      }
+    },
+    "Capablanca": {
+      "style": "technician",
+      "coarse": "sol",
+      "loss_profile": {
+        "develops|piece": 229,
+        "captures|pawn": 194,
+        "checks|king": 116,
+        "restrains|opponent": 575,
+        "defends|king": 52,
+        "coordinates|rooks": 62,
+        "isolates|pawn": 48,
+        "infiltrates|rank": 281,
+        "captures|bishop": 70,
+        "captures|knight": 81,
+        "captures|queen": 32,
+        "captures|rook": 50,
+        "exposes|king": 13,
+        "pins|piece": 99,
+        "occupies|file": 147,
+        "forks|piece": 18,
+        "weakens|structure": 5
+      }
+    },
+    "Caruana": {
+      "style": "engine",
+      "coarse": "sol",
+      "loss_profile": {
+        "captures|pawn": 178,
+        "develops|piece": 213,
+        "captures|knight": 66,
+        "restrains|opponent": 605,
+        "captures|queen": 25,
+        "defends|king": 48,
+        "coordinates|rooks": 52,
+        "occupies|file": 242,
+        "captures|bishop": 58,
+        "infiltrates|rank": 263,
+        "captures|rook": 48,
+        "checks|king": 107,
+        "exposes|king": 17,
+        "isolates|pawn": 42,
+        "pins|piece": 111,
+        "forks|piece": 10,
+        "weakens|structure": 3
+      }
+    },
+    "Fischer": {
+      "style": "universal",
+      "coarse": "uni",
+      "loss_profile": {
+        "captures|pawn": 180,
+        "develops|piece": 225,
+        "captures|queen": 27,
+        "pins|piece": 109,
+        "infiltrates|rank": 154,
+        "occupies|file": 119,
+        "defends|king": 50,
+        "coordinates|rooks": 49,
+        "captures|rook": 40,
+        "isolates|pawn": 50,
+        "restrains|opponent": 476,
+        "captures|knight": 72,
+        "exposes|king": 17,
+        "captures|bishop": 66,
+        "checks|king": 44,
+        "weakens|structure": 10,
+        "forks|piece": 15
+      }
+    },
+    "Karpov": {
+      "style": "defender",
+      "coarse": "sol",
+      "loss_profile": {
+        "develops|piece": 231,
+        "restrains|opponent": 502,
+        "defends|king": 57,
+        "coordinates|rooks": 51,
+        "captures|pawn": 174,
+        "captures|knight": 65,
+        "infiltrates|rank": 151,
+        "captures|bishop": 56,
+        "captures|rook": 43,
+        "occupies|file": 162,
+        "captures|queen": 22,
+        "checks|king": 58,
+        "forks|piece": 5,
+        "isolates|pawn": 34,
+        "pins|piece": 106,
+        "weakens|structure": 2,
+        "exposes|king": 16
+      }
+    },
+    "Kasparov": {
+      "style": "attacker",
+      "coarse": "dyn",
+      "loss_profile": {
+        "captures|pawn": 192,
+        "develops|piece": 215,
+        "captures|bishop": 66,
+        "captures|knight": 65,
+        "restrains|opponent": 374,
+        "defends|king": 49,
+        "captures|queen": 27,
+        "isolates|pawn": 54,
+        "infiltrates|rank": 208,
+        "captures|rook": 35,
+        "checks|king": 86,
+        "forks|piece": 15,
+        "exposes|king": 20,
+        "pins|piece": 132,
+        "coordinates|rooks": 38,
+        "weakens|structure": 3,
+        "occupies|file": 124
+      }
+    },
+    "Korchnoi": {
+      "style": "counter-puncher",
+      "coarse": "dyn",
+      "loss_profile": {
+        "develops|piece": 180,
+        "restrains|opponent": 336,
+        "defends|king": 39,
+        "captures|bishop": 53,
+        "infiltrates|rank": 137,
+        "captures|knight": 58,
+        "coordinates|rooks": 41,
+        "captures|pawn": 138,
+        "captures|rook": 31,
+        "occupies|file": 97,
+        "pins|piece": 116,
+        "captures|queen": 16,
+        "checks|king": 73,
+        "exposes|king": 8,
+        "isolates|pawn": 31,
+        "weakens|structure": 6,
+        "forks|piece": 6
+      }
+    },
+    "Lasker": {
+      "style": "swindler",
+      "coarse": "dyn",
+      "loss_profile": {
+        "develops|piece": 220,
+        "restrains|opponent": 364,
+        "defends|king": 55,
+        "captures|pawn": 191,
+        "captures|bishop": 72,
+        "captures|knight": 78,
+        "pins|piece": 93,
+        "coordinates|rooks": 57,
+        "occupies|file": 147,
+        "infiltrates|rank": 176,
+        "checks|king": 87,
+        "captures|queen": 24,
+        "captures|rook": 52,
+        "isolates|pawn": 49,
+        "forks|piece": 9,
+        "exposes|king": 15,
+        "weakens|structure": 4
+      }
+    },
+    "Marshall": {
+      "style": "swindler",
+      "coarse": "dyn",
+      "loss_profile": {
+        "develops|piece": 219,
+        "restrains|opponent": 513,
+        "defends|king": 55,
+        "captures|pawn": 208,
+        "captures|knight": 86,
+        "checks|king": 135,
+        "infiltrates|rank": 287,
+        "isolates|pawn": 47,
+        "captures|bishop": 79,
+        "pins|piece": 158,
+        "coordinates|rooks": 58,
+        "forks|piece": 18,
+        "occupies|file": 225,
+        "captures|rook": 52,
+        "captures|queen": 34,
+        "weakens|structure": 4,
+        "exposes|king": 31
+      }
+    },
+    "Morphy": {
+      "style": "attacker",
+      "coarse": "dyn",
+      "loss_profile": {
+        "develops|piece": 102,
+        "restrains|opponent": 242,
+        "defends|king": 28,
+        "captures|knight": 38,
+        "pins|piece": 72,
+        "infiltrates|rank": 130,
+        "coordinates|rooks": 18,
+        "captures|pawn": 95,
+        "forks|piece": 8,
+        "captures|bishop": 31,
+        "captures|queen": 14,
+        "checks|king": 67,
+        "exposes|king": 14,
+        "occupies|file": 63,
+        "captures|rook": 22,
+        "isolates|pawn": 28,
+        "weakens|structure": 2
+      }
+    },
+    "Nezhmetdinov": {
+      "style": "unorthodox",
+      "coarse": "dyn",
+      "loss_profile": {
+        "develops|piece": 238,
+        "restrains|opponent": 579,
+        "captures|pawn": 191,
+        "exposes|king": 23,
+        "defends|king": 53,
+        "coordinates|rooks": 51,
+        "captures|bishop": 66,
+        "captures|knight": 85,
+        "infiltrates|rank": 186,
+        "captures|queen": 24,
+        "isolates|pawn": 42,
+        "occupies|file": 122,
+        "captures|rook": 47,
+        "checks|king": 72,
+        "pins|piece": 170,
+        "forks|piece": 14,
+        "weakens|structure": 8
+      }
+    },
+    "Petrosian": {
+      "style": "defender",
+      "coarse": "sol",
+      "loss_profile": {
+        "develops|piece": 250,
+        "defends|king": 50,
+        "coordinates|rooks": 56,
+        "captures|pawn": 179,
+        "isolates|pawn": 36,
+        "infiltrates|rank": 139,
+        "captures|knight": 76,
+        "pins|piece": 86,
+        "restrains|opponent": 524,
+        "captures|queen": 25,
+        "checks|king": 54,
+        "captures|rook": 34,
+        "exposes|king": 13,
+        "captures|bishop": 61,
+        "occupies|file": 133,
+        "weakens|structure": 5,
+        "forks|piece": 10
+      }
+    },
+    "Polgar": {
+      "style": "initiator",
+      "coarse": "dyn",
+      "loss_profile": {
+        "develops|piece": 224,
+        "restrains|opponent": 498,
+        "captures|pawn": 185,
+        "captures|knight": 81,
+        "captures|bishop": 71,
+        "defends|king": 54,
+        "checks|king": 94,
+        "isolates|pawn": 47,
+        "captures|queen": 29,
+        "infiltrates|rank": 199,
+        "exposes|king": 19,
+        "coordinates|rooks": 53,
+        "occupies|file": 160,
+        "captures|rook": 43,
+        "pins|piece": 129,
+        "forks|piece": 13,
+        "weakens|structure": 3
+      }
+    },
+    "Rapport": {
+      "style": "unorthodox",
+      "coarse": "dyn",
+      "loss_profile": {
+        "develops|piece": 231,
+        "restrains|opponent": 627,
+        "checks|king": 99,
+        "pins|piece": 101,
+        "captures|pawn": 187,
+        "defends|king": 49,
+        "captures|queen": 32,
+        "coordinates|rooks": 51,
+        "captures|knight": 74,
+        "occupies|file": 199,
+        "captures|bishop": 63,
+        "infiltrates|rank": 221,
+        "captures|rook": 54,
+        "isolates|pawn": 42,
+        "exposes|king": 18,
+        "forks|piece": 19,
+        "weakens|structure": 7
+      }
+    },
+    "Rubinstein": {
+      "style": "harmonious",
+      "coarse": "sol",
+      "loss_profile": {
+        "develops|piece": 241,
+        "restrains|opponent": 520,
+        "captures|pawn": 177,
+        "defends|king": 54,
+        "captures|bishop": 67,
+        "captures|knight": 84,
+        "pins|piece": 74,
+        "captures|rook": 47,
+        "isolates|pawn": 43,
+        "infiltrates|rank": 217,
+        "coordinates|rooks": 60,
+        "captures|queen": 24,
+        "occupies|file": 171,
+        "forks|piece": 13,
+        "checks|king": 80,
+        "exposes|king": 18,
+        "weakens|structure": 7
+      }
+    },
+    "So": {
+      "style": "engine",
+      "coarse": "sol",
+      "loss_profile": {
+        "develops|piece": 230,
+        "restrains|opponent": 636,
+        "captures|pawn": 212,
+        "captures|knight": 77,
+        "defends|king": 57,
+        "coordinates|rooks": 48,
+        "captures|bishop": 76,
+        "infiltrates|rank": 239,
+        "forks|piece": 17,
+        "isolates|pawn": 61,
+        "checks|king": 92,
+        "pins|piece": 78,
+        "captures|queen": 34,
+        "exposes|king": 24,
+        "captures|rook": 51,
+        "occupies|file": 141,
+        "weakens|structure": 6
+      }
+    },
+    "Tal": {
+      "style": "attacker",
+      "coarse": "dyn",
+      "loss_profile": {
+        "develops|piece": 240,
+        "checks|king": 123,
+        "restrains|opponent": 480,
+        "defends|king": 52,
+        "captures|pawn": 194,
+        "occupies|file": 179,
+        "captures|bishop": 60,
+        "infiltrates|rank": 260,
+        "captures|knight": 77,
+        "isolates|pawn": 37,
+        "forks|piece": 15,
+        "coordinates|rooks": 53,
+        "captures|rook": 59,
+        "captures|queen": 23,
+        "pins|piece": 88,
+        "exposes|king": 17,
+        "weakens|structure": 2
+      }
+    },
+    "nimzowitsch": {
+      "style": "hypermodern",
+      "coarse": "sol",
+      "loss_profile": {
+        "develops|piece": 235,
+        "restrains|opponent": 561,
+        "captures|pawn": 180,
+        "defends|king": 59,
+        "captures|knight": 84,
+        "pins|piece": 117,
+        "infiltrates|rank": 223,
+        "isolates|pawn": 52,
+        "coordinates|rooks": 64,
+        "captures|bishop": 67,
+        "occupies|file": 134,
+        "captures|queen": 26,
+        "captures|rook": 40,
+        "checks|king": 100,
+        "exposes|king": 21,
+        "forks|piece": 9,
+        "weakens|structure": 2
+      }
+    },
+    "smyslov": {
+      "style": "harmonious",
+      "coarse": "sol",
+      "loss_profile": {
+        "develops|piece": 259,
+        "restrains|opponent": 626,
+        "captures|pawn": 214,
+        "defends|king": 56,
+        "captures|knight": 82,
+        "captures|bishop": 71,
+        "coordinates|rooks": 55,
+        "occupies|file": 207,
+        "captures|rook": 57,
+        "pins|piece": 107,
+        "infiltrates|rank": 254,
+        "checks|king": 93,
+        "captures|queen": 34,
+        "exposes|king": 24,
+        "isolates|pawn": 59,
+        "weakens|structure": 7,
+        "forks|piece": 14
+      }
+    }
+  }
+}

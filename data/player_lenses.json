@@ -1,0 +1,19 @@
+{
+  "Magnus": {
+    "mech": {
+      "obtain|knight": 148,
+      "become|dominant": 146,
+      "obtain|bishop": 144,
+      "obtain|pawn": 150,
+      "obtain|queen": 102,
+      "obtain|rook": 117,
+      "isolate|rook": 27,
+      "isolate|queen": 22,
+      "become|victorious": 24,
+      "isolate|bishop": 11,
+      "isolate|knight": 4
+    },
+    "total": 895,
+    "games": 150
+  }
+}

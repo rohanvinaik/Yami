@@ -204,7 +204,7 @@ class OpponentProfiler:
 
             if skill > 0.5:
                 self.profile.estimated_strength = OpponentStrength.STRONG
-            elif skill > 0.0 or skill > -0.3:
+            elif skill > -0.3:
                 self.profile.estimated_strength = OpponentStrength.MODERATE
             else:
                 self.profile.estimated_strength = OpponentStrength.WEAK

@@ -1,0 +1,40 @@
+=== LOSSS → /Users/rohanvinaik/Projects/Yami/data/genesis_roster/pgn_losses (target 50/player) ===
+  skip (have  50): Tal
+  skip (have  50): Kasparov
+  skip (have  26): Morphy
+  skip (have  50): Capablanca
+  skip (have  49): Karpov
+  skip (have  50): Petrosian
+  skip (have  49): Fischer
+  skip (have  50): Nimzowitsch
+  skip (have  50): Alekhine
+  skip (have  50): Polgar
+  skip (have  50): Korchnoi
+  skip (have  50): Lasker
+  skip (have  50): Marshall
+  skip (have  50): Smyslov
+  skip (have  50): Rubinstein
+  skip (have  50): Nezhmetdinov
+  skip (have  50): Rapport
+  skip (have  50): Caruana
+  skip (have  50): So
+=== DRAWS → /Users/rohanvinaik/Projects/Yami/data/genesis_roster/pgn_draws (target 50/player) ===
+  skip (have  50): Tal
+  skip (have  50): Kasparov
+  skip (have  26): Morphy
+  skip (have  50): Capablanca
+  skip (have  49): Karpov
+  skip (have  50): Petrosian
+  skip (have  50): Fischer
+  [OK ] Nimzowitsch    (hypermodern    ) target=Aaron_Nimzowitsch draws=50
+  skip (have  47): Alekhine
+  skip (have  50): Polgar
+  skip (have  50): Korchnoi
+  skip (have  50): Lasker
+  skip (have  43): Marshall
+  [OK ] Smyslov        (harmonious     ) target=Vassily_Smyslov draws=50
+  skip (have  50): Rubinstein
+  skip (have  50): Nezhmetdinov
+  skip (have  50): Rapport
+  skip (have  50): Caruana
+  skip (have  50): So

@@ -12,3 +12,14 @@ build/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+
+# macOS
+.DS_Store
+
+# Tool caches
+.serena/
+
+# Large data & model artifacts (kept local; too big for GitHub 100MB limit)
+data/*.jsonl
+*.db
+models/

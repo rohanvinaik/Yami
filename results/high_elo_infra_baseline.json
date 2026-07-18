@@ -1,0 +1,56 @@
+{
+  "label": "infra_baseline",
+  "neural": false,
+  "checkpoint": null,
+  "games_per_opponent": 10,
+  "total_games": 40,
+  "total_wins": 0,
+  "total_draws": 40,
+  "total_losses": 0,
+  "per_opponent": {
+    "SF ELO 2000": {
+      "opponent_elo": 2000,
+      "wins": 0,
+      "draws": 10,
+      "losses": 0,
+      "score": 0.5,
+      "est_elo": 2000.0,
+      "ci_low": 1804.0,
+      "ci_high": 2196.0,
+      "time_s": 81.8
+    },
+    "SF ELO 2500": {
+      "opponent_elo": 2500,
+      "wins": 0,
+      "draws": 10,
+      "losses": 0,
+      "score": 0.5,
+      "est_elo": 2500.0,
+      "ci_low": 2304.0,
+      "ci_high": 2696.0,
+      "time_s": 89.1
+    },
+    "SF ELO 2800": {
+      "opponent_elo": 2800,
+      "wins": 0,
+      "draws": 10,
+      "losses": 0,
+      "score": 0.5,
+      "est_elo": 2800.0,
+      "ci_low": 2604.0,
+      "ci_high": 2996.0,
+      "time_s": 79.1
+    },
+    "SF ELO 3190": {
+      "opponent_elo": 3190,
+      "wins": 0,
+      "draws": 10,
+      "losses": 0,
+      "score": 0.5,
+      "est_elo": 3190.0,
+      "ci_low": 2994.0,
+      "ci_high": 3386.0,
+      "time_s": 51.7
+    }
+  }
+}

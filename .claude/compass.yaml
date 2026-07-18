@@ -1,0 +1,177 @@
+version: 1
+axes:
+  problem:
+    name: problem
+    claims:
+    - text: 'LLMs are terrible at chess because they spend neural capacity on structural
+        work that infrastructure handles trivially. Legal move generation, one-move
+        tactics, known endgames, opening theory — these are solved problems. An LLM
+        considering illegal moves, blundering pieces, or misplaying known endgames
+        is wasting capacity on the equivalent of namespace resolution in theorem proving.
+        The prediction: 80-90% of chess decision-making is infrastructure, not intelligence.'
+      source: interview:problem
+      heading: What specific problem does this solve?
+      confidence: 0.9
+      provenance: interviewed
+      origin_facet: ''
+    - text: 'Non-goals: competing with Stockfish/Lc0 (3500+ ELO engines). Yami targets
+        expert-level play (2000-2200 ELO) to demonstrate the infrastructure thesis,
+        not to build the strongest chess engine. Also not a goal: training a chess-specific
+        neural network from scratch. The LLM is used as-is; infrastructure does the
+        heavy lifting.'
+      source: interview:problem
+      heading: What are the non-goals?
+      confidence: 0.9
+      provenance: interviewed
+      origin_facet: ''
+    - text: Success = the full Yami stack (infrastructure + LLM) plays at 2000-2200
+        ELO, with clear ablation curves showing each layer's contribution. Each layer
+        independently measurable. The infrastructure percentage (how much is deterministic
+        vs neural) is measured empirically. The thesis is proven if infrastructure
+        accounts for >70% of the ELO gain over raw LLM baseline.
+      source: interview:problem
+      heading: What does success look like?
+      confidence: 0.9
+      provenance: interviewed
+      origin_facet: ''
+    summary: ''
+    depth: 2
+  solution:
+    name: solution
+    claims:
+    - text: 'Alternative: fine-tune an LLM on chess games (brute force scaling). This
+        misses the point — it optimizes the wrong frontier (model size vs performance
+        instead of infrastructure quality vs residual hardness). Alternative: pure
+        engine (Stockfish). This proves nothing about LLM capability. Yami''s layered
+        infrastructure approach is the only one that decomposes the problem and measures
+        the contribution of each layer.'
+      source: interview:solution
+      heading: Why this approach over alternatives?
+      confidence: 0.9
+      provenance: interviewed
+      origin_facet: ''
+    - text: 'Tradeoffs: (1) The positional knowledge graph uses hand-crafted dimensions
+        rather than learned embeddings — interpretable but potentially less nuanced.
+        (2) The censor stack is conservative — it may suppress creative sacrifices
+        that a human expert would play. (3) Opening book dependency means the system
+        follows known theory rather than discovering novel openings. (4) Stockfish
+        is used as oracle during training only, not at runtime.'
+      source: interview:solution
+      heading: What tradeoffs were made?
+      confidence: 0.9
+      provenance: interviewed
+      origin_facet: ''
+    - text: 'Prior work: Wayfinder (theorem proving as navigation through structured
+        semantic space — 58% infrastructure result), Minsky''s Society of Mind (censors/suppressors,
+        K-lines), Winston''s Near-Miss Learning, OTP (Orthogonal Ternary Projection
+        — ternary {-1,0,+1} as information geometry), GSE (Geometric Semantic Encoding
+        — meaning from position in structured space), COEC (Constraint-Oriented Emergent
+        Computation — behavior emerges from constraints), Constrained Hallucination
+        (LLM output as untrusted intermediate code bounded by deterministic infrastructure).'
+      source: interview:solution
+      heading: What prior work inspired this?
+      confidence: 0.9
+      provenance: interviewed
+      origin_facet: ''
+    summary: ''
+    depth: 2
+  implementation:
+    name: implementation
+    claims:
+    - text: 'Python 3.11+. Snake_case for functions/variables, PascalCase for classes.
+        Module names match architecture layers: legal_moves, tactical_scoper, endgame_resolver,
+        opening_book, knowledge_graph, candidate_filter, llm_decision, engine. Dataclasses
+        for structured data (ScopedMove, AnnotatedCandidate, PositionalProfile, PlanTemplate).
+        Enums for categorical dimensions (Material, Structure, Activity, Safety, Tempo).'
+      source: interview:implementation
+      heading: What naming conventions exist?
+      confidence: 0.9
+      provenance: interviewed
+      origin_facet: ''
+    - text: python-chess for board representation and legal move generation. Stockfish
+        binary via python-chess UCI for oracle evaluation. Syzygy tablebases via python-chess
+        for endgame resolution. Polyglot opening books. httpx for async Lichess API
+        calls. anthropic SDK for Claude LLM integration. pytest for testing. ruff
+        for linting. Type hints throughout.
+      source: interview:implementation
+      heading: What tools/techniques are standard?
+      confidence: 0.9
+      provenance: interviewed
+      origin_facet: ''
+    - text: 'A well-written module: (1) Single responsibility matching one architecture
+        layer. (2) Pure functions where possible — board in, structured data out.
+        (3) Each layer''s public interface returns typed dataclasses. (4) Censors
+        are composable filters that take a list and return a filtered list. (5) No
+        side effects in analysis layers. (6) The engine module is the only stateful
+        coordinator.'
+      source: interview:implementation
+      heading: What does a well-written module look like?
+      confidence: 0.9
+      provenance: interviewed
+      origin_facet: ''
+    summary: ''
+    depth: 1
+  world:
+    name: world
+    claims:
+    - text: Has docs/ directory
+      source: directory_structure
+      heading: ''
+      confidence: 0.4
+      provenance: inferred
+      origin_facet: ''
+    - text: Python 3.11+ required. macOS/Linux. Stockfish binary must be installed
+        separately (brew install stockfish or system package). Syzygy tablebases are
+        optional large files (~150GB for 7-piece) — system degrades gracefully without
+        them.
+      source: interview:world
+      heading: Language/runtime constraints?
+      confidence: 0.9
+      provenance: interviewed
+      origin_facet: ''
+    - text: Local development. No cloud infrastructure required for core functionality.
+        Lichess API (optional, for opening explorer fallback) is rate-limited. Anthropic
+        API key required for LLM decision layer. Stockfish binary path configurable
+        via environment variable STOCKFISH_PATH.
+      source: interview:world
+      heading: Infrastructure assumptions?
+      confidence: 0.9
+      provenance: interviewed
+      origin_facet: ''
+    - text: 'Core deps: python-chess (>=1.10), anthropic (>=0.40), httpx (>=0.27).
+        Dev deps: pytest, ruff, mypy. Optional: stockfish binary (for oracle/evaluation),
+        syzygy tablebases (for endgame resolution). No pinned versions beyond minimums
+        — follow semver.'
+      source: interview:world
+      heading: Important dependency constraints?
+      confidence: 0.9
+      provenance: interviewed
+      origin_facet: ''
+    summary: Has docs/ directory
+    depth: 2
+directives:
+- kind: forbidden
+  text: proposed_rules
+  source: enforceable_rules
+- kind: forbidden
+  text: existing_rule_count
+  source: enforceable_rules
+- kind: forbidden
+  text: directives_analyzed
+  source: enforceable_rules
+- kind: forbidden
+  text: already_covered
+  source: enforceable_rules
+gap_report:
+  axis_depths:
+    problem: 2
+    solution: 2
+    implementation: 1
+    world: 2
+  spikiness: 0.0
+  sparse_axes:
+  - implementation
+  interview_recommended: false
+forged_at: 1774109432.278383
+frozen: true
+frozen_hash: 31adedfc65564512

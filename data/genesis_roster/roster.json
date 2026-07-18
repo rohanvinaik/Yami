@@ -1,0 +1,78 @@
+{
+  "Alekhine": {
+    "style": "deep-tactics",
+    "games": 40
+  },
+  "Capablanca": {
+    "style": "technician",
+    "games": 40
+  },
+  "Caruana": {
+    "style": "engine",
+    "games": 28
+  },
+  "Fischer": {
+    "style": "universal",
+    "games": 39
+  },
+  "Karpov": {
+    "style": "defender",
+    "games": 39
+  },
+  "Kasparov": {
+    "style": "attacker",
+    "games": 40
+  },
+  "Korchnoi": {
+    "style": "counter-puncher",
+    "games": 40
+  },
+  "Lasker": {
+    "style": "swindler",
+    "games": 39
+  },
+  "Marshall": {
+    "style": "swindler",
+    "games": 36
+  },
+  "Morphy": {
+    "style": "attacker",
+    "games": 40
+  },
+  "Nezhmetdinov": {
+    "style": "unorthodox",
+    "games": 40
+  },
+  "Petrosian": {
+    "style": "defender",
+    "games": 40
+  },
+  "Polgar": {
+    "style": "initiator",
+    "games": 39
+  },
+  "Rapport": {
+    "style": "unorthodox",
+    "games": 40
+  },
+  "Rubinstein": {
+    "style": "harmonious",
+    "games": 40
+  },
+  "So": {
+    "style": "engine",
+    "games": 40
+  },
+  "Tal": {
+    "style": "attacker",
+    "games": 40
+  },
+  "nimzowitsch": {
+    "style": "?",
+    "games": 40
+  },
+  "smyslov": {
+    "style": "?",
+    "games": 33
+  }
+}

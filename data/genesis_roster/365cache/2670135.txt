@@ -1,0 +1,1 @@
+1. e4 e5 2. Nf3 d6 3. d4 Nd7 4. Bc4 c6 5. c3 b5 6. Bb3 Be7 7. a4 bxa4 8. Bxa4 Qc7 9. O-O Ngf6 10. Re1 O-O 11. Nbd2 Nb6 12. Bb3 h6 13. Nf1 Rd8 14. Ng3 c5 15. Be3 Bb7 16. d5 Bc8 17. h3 Bd7 18. Qd2 Bf8 19. c4 Nh7 20. Ra5 Rdb8 21. Rea1 Rb7 22. Qc3 Nc8 23. Rb1 g6 {[1/2-1/2 in 33]}

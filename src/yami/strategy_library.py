@@ -362,7 +362,7 @@ def query_strategies(
 
         # Navigation vector alignment (Hamming similarity)
         matches = sum(
-            a == b for a, b in zip(nv, strat.nav_profile, strict=False)
+            a == b for a, b in zip(nv, strat.nav_profile)
             if b != 0  # only count non-zero entries
         )
         non_zero = sum(1 for b in strat.nav_profile if b != 0)

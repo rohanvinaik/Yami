@@ -31,10 +31,12 @@ def filter_and_annotate(
     profile = evaluate_position(board)
     plan = suggest_plan(profile)
 
-    ranked = rank_moves(moves, plan, board)
-    top = ranked[:max_candidates]
+    # Use the order from the coherence engine (moves are pre-sorted by engine.py)
+    # Don't re-rank with the legacy knowledge_graph — it overrides coherence scores
+    top_moves = moves[:max_candidates]
+    ranked = [RankedMove(scoped_move=m, alignment=1.0 - i * 0.1) for i, m in enumerate(top_moves)]
 
-    candidates = [_annotate(board, rm, plan, profile) for rm in top]
+    candidates = [_annotate(board, rm, plan, profile) for rm in ranked]
     return candidates, plan, profile
 
 

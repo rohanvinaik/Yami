@@ -79,7 +79,7 @@ class NavigationVector:
     def hamming_distance(self, other: NavigationVector) -> int:
         """Count mismatched banks."""
         return sum(
-            a != b for a, b in zip(self.as_tuple(), other.as_tuple(), strict=True)
+            a != b for a, b in zip(self.as_tuple(), other.as_tuple())
         )
 
 
@@ -284,7 +284,8 @@ def detect_anchors(board: chess.Board, move: chess.Move) -> set[str]:
         anchors.add("castling")
         anchors.add("king-safety")
 
-    # Phase anchors
+    # Phase anchors — report what IS, don't judge what SHOULD BE.
+    # The model learns which anchors matter. Infrastructure stays neutral.
     phase = _compute_phase(board)
     if phase == 1:
         anchors.add("development")
@@ -309,7 +310,7 @@ def detect_anchors(board: chess.Board, move: chess.Move) -> set[str]:
         if to_rank == seventh:
             anchors.add("rook-on-seventh")
 
-    # Pawn structure anchors
+    # Pawn structure anchors — report the fact, let the model judge
     if piece.piece_type == chess.PAWN:
         to_file = chess.square_file(move.to_square)
         if 2 <= to_file <= 5:

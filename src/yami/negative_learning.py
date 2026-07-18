@@ -134,7 +134,7 @@ def mine_negative_examples_from_evals(
     """
     examples = []
     for fen, move_uci, ev_before, ev_after in zip(
-        fens, moves, evals_before, evals_after, strict=False
+        fens, moves, evals_before, evals_after
     ):
         drop = ev_before - ev_after
         if drop > threshold_cp:
@@ -175,7 +175,7 @@ def mine_near_misses(
     """
     near_misses = []
     for fen, best, second, ev_best, ev_second in zip(
-        fens, best_moves, second_moves, best_evals, second_evals, strict=False
+        fens, best_moves, second_moves, best_evals, second_evals
     ):
         gap = ev_best - ev_second
         if 0 < gap <= gap_threshold:
