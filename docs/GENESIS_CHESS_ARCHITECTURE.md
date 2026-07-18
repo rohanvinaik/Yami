@@ -412,3 +412,120 @@ loss (+273 → −281 located); the soft overlay proven to re-prioritize off lea
 **A: the safety-seeking rethink — BUILT & PROVEN** (`learn_loop_v2.py`, `SAFETY_GAIN` gated on rethink
 pressure): re-prioritizes off traps 5/5 AND now 5/5 toward a Stockfish-SAFER move (was 3/5), incl.
 `Kd1(−9998, into mate) → Qd2(−602)`. Next — **B: the per-style negative lens** from the corpus's losses.*
+
+## 14. The Regenesis-Native Architecture — low-compute chess *understanding* (the complete build)
+
+*This is the synthesis the whole document points at: how Yami reads a game as a story and articulates
+**why** a move was brilliant, at near-zero compute — no minimax, no neural net, no JVM. It is Winston's
+Strong Story Hypothesis + SSL's significance-weighting, run on the Regenesis engine. Proven in miniature
+(2026-07-13); this section is the architecture to build out.*
+
+### 14.1 The substrate — Regenesis (Python-native, no JVM)
+
+The **Regenesis MCP** (`mcp__Regenesis__*`, engine at `~/Projects/Regenesis`) exposes the entire
+story-understanding stack **Python-native — no JVM, no cold-start, no per-N-fires cycling, nothing to
+leak.** One `understand(game_story, kind='text')` call derives the arc, ranks it by significance, recognizes
+the archetypes, and **writes the rules it induced itself**. It reads the chess universe from
+`~/Genesis/gsebridge/rules` by default. The Java fleet (and its leak surgery) is retired. The relevant ops:
+`understand` · `significance` · `frame_of_frames` · `socratic`/`gap` (find the read's gaps) · `ledger`/`promote`
+(the corpus self-teaching loop) · `brilliancy`/`tell`/`ask` (articulate) · `clean`/`ground` (input pre-pass).
+
+### 14.2 The load-bearing idea — significance = surprise = information
+
+Regenesis scores each derivation by the **improbability of its N-hop reconstruction chain** (SSL:
+`surprise = −log P`, weighted by the branching freedom κ the universe afforded;
+`~/Projects/Regenesis/docs/SIGNIFICANCE_WEIGHTING.md`). This does natively what the hand-tuned IDF-floor
+strained toward, and more:
+
+- **The universal, low-information frame is zeroed automatically.** `obtain` (material — every player does
+  it) → weight **0.0**. No hand-tuning; information content prices it out.
+- **The load-bearing move surfaces by chain-improbability.** The deepest coherent chain leads — *recognition,
+  not search*. This is Yami's whole thesis (30 moves → the one that matters) computed: the robot chef spotting
+  the load-bearing decision without simulating the kitchen.
+- **Depth of significant chains = depth of understanding**, and it is *measurable*. On the shallow
+  hand-authored library the ceiling was ~1.79 (3 hops). With a **deep** ruleset it hit **5.26**, and
+  `kasparov —become→ brilliant` was the #1-ranked derivation — Yami read a game and put "this was brilliant"
+  at the *top* of what mattered, the causal why-chain beneath it.
+
+### 14.3 The two gates (neither is "chess is shallow")
+
+1. **Legibility.** The renderer must emit **discrete signal-jumps**, not a flood. The current render floods
+   (`restrains opponent` ×~150/game), and — critically — **the flood *suppresses* the significance of the real
+   signal**: a master's positional squeeze (`cramped/constrained/control-file`) ranks 0.0 because over-firing
+   over-determines it (huge fan-in → zero surprise). A clean, deduped, signal-jump render lets the load-bearing
+   move rise. Tools: a renderer legibility pass + `consolidate` (σ-preserving noise-forgetting) + `clean`.
+2. **Library depth.** Deep rules → deep reads (1.79 → 5.26, proven). The hand-authored library is shallow;
+   the **self-learned composed rules** (§14.5) are the raw material `promote` compounds into longer chains.
+
+They **multiply**: a legible story lets significance *see* the bind; a deep library lets the chain *reach* it.
+
+### 14.4 The refinement loop — the engine of excellence
+
+Each step is an existing Regenesis op; the loop is the low-compute path to mastery:
+
+```
+understand(game)              → the arc + the rules it wrote itself
+   ↓  socratic / gap          → what it CAN'T yet say = the next frame to build
+   ↓  author a legibler story / a deeper frame (hand-tuned to the ideal — that IS the curriculum)
+   ↓  refire → ledger → promote  → self-teach: bank the deep rule, grow κ, lengthen the chains
+   ↺  until  tell / brilliancy  can articulate WHY the game was brilliant
+```
+
+**Hand-authoring the ideal state is the method, not a compromise** (user, 2026-07-13): tune each play-style
+and win-condition until the signal is genuinely clean; *then* it is robust for the messy world. `promote`
+then learns the hand-seeded depth back as a permanent rule — so the endgame stays **compute-not-impose**: the
+human seeds one clean lesson, the engine generalizes and banks it.
+
+### 14.5 The 19-style deep-frame library (BUILT 2026-07-13)
+
+Twelve hand-tuned **style-arcs** (`~/Genesis/gsebridge/rules/chess_<style>.rules` + `.concepts`, registered in
+`archetypes.index`) cover all 19 masters, each a *deep causal chain to that style's characteristic win-condition
+climax* — and the engine **self-learns each arc as composed rules while it reads** (e.g.
+`penetrate ∧ pin ∧ expose ∧ check ⇒ become brilliant`):
+
+| style-arc | masters | win-condition climax |
+|---|---|---|
+| `chess_kasparov` (attacker; full set: king-hunt + sacrifice + dynamic-center) | Tal, Kasparov, Morphy | → **brilliant** |
+| `chess_defender` | Karpov, Petrosian | → **strangled / zugzwang** |
+| `chess_technician` | Capablanca | → **flawless** conversion |
+| `chess_hypermodern` | Nimzowitsch | → **undermine → strike** |
+| `chess_deeptactics` | Alekhine | → **cascade → decisive** |
+| `chess_counter` | Korchnoi | → **turn tables** |
+| `chess_swindler` | Lasker, Marshall | → **swindle** |
+| `chess_harmonious` | Smyslov, Rubinstein | → **harmonious** conversion |
+| `chess_unorthodox` | Nezhmetdinov, Rapport | → **conjure → creative** |
+| `chess_universal` | Fischer | → **precise** |
+| `chess_initiator` | Polgar | → **force → attack** |
+| `chess_engine` | Caruana, So | → **optimal → inevitable** |
+
+Verified to **discriminate**: Kasparov reads as the attacker's king-hunt (`brilliant`, 5.26); Petrosian reads
+as `chess_defender`/`chess_technician`/`chess_counter` — the bind (`bind → immobilized → strangled`), a
+completely different climax. Per-style **exemplar-tuning** (one legible story per style whose chain completes
+to the top, as Kasparov's did) is the immediate lesson-by-lesson work.
+
+### 14.6 The negative lens, natively (loss = a win-story the result breaks)
+
+A loss is not a genre; it is a **win-story whose ascendancy the outcome refutes** — the mirror of brilliancy
+(there the continuation retracts the naive `fallen`→`brilliant`; here the outcome retracts the naive
+`dominant`→the tragic collapse). **Outcome-integration** (`game_renderer.render_game(append_outcome=True)` +
+`chess.rules` `defeats→victorious`/`defeats→defeated`) makes it fire: `Tragedy('master')` recognized, the
+win-frame retracted, and Regenesis *induces the rule itself* (`defeat ⇒ fallen`). The per-style negative lens
+is then each style-arc's **failure mode** — where the position *breaks* the style (the surprise). Loss and
+draw are separate corpora (a draw is often an intentional hold — a future equilibrium lens). The action-lens
+port (`scripts/surprise_lens.py`) measures the style-mistake discrimination (67% coarse; U3-gated for finer).
+
+### 14.7 How it seats into Yami (the endgame)
+
+- **Recognition → move:** `significance` names the load-bearing derivation; `prescribe` (2nd-pass re-fire
+  through a resolving universe) turns the diagnosed narrative into the move — Yami's Scale-4 selection.
+- **SoM routing (U6):** read the position's regime → recall the style-arc best matched (the K-line/Kanerva
+  resemblance of `law_as_architecture` System 2) → route in that style. The 12 style-arcs are the laws it routes.
+- **Warrant stays exogenous:** Stockfish/outcomes *judge* (the oracle), never train — significance and the
+  self-written rules carry the meaning, `promote` banks it, Stockfish adjudicates which routing wins (U7).
+- **The goal:** Yami watches a game and says *"this was brilliant, and here is the chain of why"* — deep
+  symbolic understanding at near-zero compute. The whole point the scaling paradigm optimizes away.
+
+*Status (2026-07-13): 14.1–14.5 PROVEN in miniature (the Regenesis MCP; significance 1.79→5.26 on a deep
+ruleset; the 19-style library built + discriminating). 14.6 built (outcome-integration + the surprise lens).
+Immediate next (off trickle-charge): the renderer legibility pass (§14.3), per-style exemplar-tuning (§14.5),
+and `understand_batch`+`promote` over the game corpora to let the library self-deepen (§14.4).*

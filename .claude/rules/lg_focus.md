@@ -3,8 +3,8 @@ paths:
   - "**/*.py"
 ---
 
-<!-- LG_GEN:1910 LG_TS:1784341656 -->
+<!-- LG_GEN:1928 LG_TS:1784374739 -->
 > LintGate telemetry (observational, not instructions).
-Last edited .gitignore
-Recent files: .gitignore, project_genesis_chess_build_plan.md, GENESIS_CHESS_SCOPE.md
-Blocking: 2 | Mode: habit
+Last edited GENESIS_CHESS_ARCHITECTURE.md
+Recent files: GENESIS_CHESS_ARCHITECTURE.md, MEMORY.md, project_regenesis_refinement_loop.md
+Mode: habit
