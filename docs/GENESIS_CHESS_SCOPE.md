@@ -158,10 +158,16 @@ Learning grows the laws; routing applies them; Stockfish judges which routing wi
 - **U5 [NEXT] Formalize the two-lens split.** STYLE lens = action-frequency profile (symbolic, cheap,
   no Genesis fire) for routing/clustering; FRAME lens = Genesis-derived frames for the learning loop.
   *Measure:* style clustering uses the action lens (78%+ coarse), learning uses the frame lens.
-- **U6 [BLOCKED: U3] SoM Tier-4 routing (styles-as-laws).** Read the position's regime → recall the
-  style-law best matched (K-line resemblance) → route the move. Yami already has the substrate (Temporal
-  SoM, K-lines, censors, navigator-regime). *Blocked until U3* gives a style-relevant vocabulary — routing
-  on the coarse vocabulary can't distinguish laws finely enough. *Measure:* Stockfish (U7).
+- **U6 [DESIGNED + PROTO 2026-07-14 — the router is a PORT of ModelAtlas navigate].** Read the position →
+  candidate moves/frames + their significance (the read) → **navigate**: score = significance × bank-alignment
+  (multiplicative), banks steered by direction. Two banks answer "learn from both AND learn what wins":
+  **significance** (how brilliant/load-bearing) and **outcome** (signed). The direction knob = the two modes —
+  `outcome=0` learns from both sides' brilliance, `outcome=+1` prefers the winner (opposed decays hyperbolically);
+  ELO is another bank, style/regime = IDF-weighted anchors. Proven on the real Karpov read
+  (`scripts/navigate_moves.py`): learning tops with the loser's brilliancy, deciding with the winner's — the
+  equal-and-opposite ranking, auditable. **No longer U3-blocked** — the 19 deep style-arcs (via the Regenesis
+  MCP) are the style-relevant vocabulary, and ModelAtlas is the routing mechanism ready-made. *Measure:*
+  Stockfish (U7). See `docs/GENESIS_CHESS_ARCHITECTURE.md` §14.7.
 
 ### Fitness — needs routing (U6)
 

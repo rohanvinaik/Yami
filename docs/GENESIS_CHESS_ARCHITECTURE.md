@@ -449,11 +449,16 @@ strained toward, and more:
 
 ### 14.3 The two gates (neither is "chess is shallow")
 
-1. **Legibility.** The renderer must emit **discrete signal-jumps**, not a flood. The current render floods
-   (`restrains opponent` ×~150/game), and — critically — **the flood *suppresses* the significance of the real
-   signal**: a master's positional squeeze (`cramped/constrained/control-file`) ranks 0.0 because over-firing
-   over-determines it (huge fan-in → zero surprise). A clean, deduped, signal-jump render lets the load-bearing
-   move rise. Tools: a renderer legibility pass + `consolidate` (σ-preserving noise-forgetting) + `clean`.
+1. **Legibility [BUILT & PROVEN 2026-07-14].** The renderer must emit **discrete signal-jumps**, not a flood.
+   It floods because positional events fired on *presence*, not *inflection*: `restrains` at a 0.03 mobility
+   threshold (nearly every quiet move), `infiltrates` on position not crossing, `occupies file` re-firing as a
+   rook shuffles. **Fix** (`game_renderer._positional`): raise the restrain threshold to a real jump (0.12),
+   fire `infiltrates` only when a piece *crosses into* the deep zone this move, fire `occupies file` only when
+   the rook *changes onto* an open file. Result on the game that was drowning: **`restrains` 150 → 15, events
+   308 → 89**, and the read got *richer* not thinner (**78 derivations**, both attack arcs completing), with
+   the significance ceiling jumping **1.79 → 6.36** and `obtain` still 0.0. Legibility is not polish — the
+   flood was *suppressing* the load-bearing move by over-determination; killing it lets the arc surface on
+   real, untuned games. (`consolidate`/`clean` remain the runtime complements.)
 2. **Library depth.** Deep rules → deep reads (1.79 → 5.26, proven). The hand-authored library is shallow;
    the **self-learned composed rules** (§14.5) are the raw material `promote` compounds into longer chains.
 
@@ -518,14 +523,62 @@ port (`scripts/surprise_lens.py`) measures the style-mistake discrimination (67%
 
 - **Recognition → move:** `significance` names the load-bearing derivation; `prescribe` (2nd-pass re-fire
   through a resolving universe) turns the diagnosed narrative into the move — Yami's Scale-4 selection.
-- **SoM routing (U6):** read the position's regime → recall the style-arc best matched (the K-line/Kanerva
-  resemblance of `law_as_architecture` System 2) → route in that style. The 12 style-arcs are the laws it routes.
+- **SoM routing (U6) = ModelAtlas navigate-over-moves [DESIGNED + PROTO 2026-07-14].** The recommendation
+  layer that turns "here's what happened" into "here's the move to play, and why" is **ported from ModelAtlas**
+  (`model_atlas/query_navigate.py`), not invented. Score = **significance × bank-alignment, MULTIPLICATIVE**,
+  banks steered by **direction** (`+1/-1/0`); a move brilliant on one axis but wrong on another → *zero, not
+  half*. Two banks solve "learn from both AND learn what wins": **significance** (the read's chain-improbability
+  = how brilliant/load-bearing) and **outcome** (signed: `+` winner's side, `−` loser's). The direction knob IS
+  the two modes (`_bank_score_single`): `outcome_dir=0` → judge on merit (**LEARN FROM BOTH** — both sides'
+  brilliancy scored purely by significance); `outcome_dir=+1` → aligned rewarded, opposed decays hyperbolically
+  (**PREFER THE WINNER**). Proven on the real Karpov read (`scripts/navigate_moves.py`): LEARNING tops with the
+  *loser's* brilliancy (6.36 — the most instructive lesson), DECIDING tops with the *winner's* (5.66 — the move
+  to play) — the "equal-and-opposite ranking" the design calls for, and fully **auditable** (every rank traces
+  to `significance × outcome`). ELO is just another bank (the "GM-loses-in-7" bracket = a different direction);
+  regime/style = IDF-weighted anchors (the same rarity math that zeros universal `obtain`). This unblocks U6
+  (was "BLOCKED on U3") — the router is a port. The 12 style-arcs (§14.5) are the laws it navigates.
 - **Warrant stays exogenous:** Stockfish/outcomes *judge* (the oracle), never train — significance and the
   self-written rules carry the meaning, `promote` banks it, Stockfish adjudicates which routing wins (U7).
 - **The goal:** Yami watches a game and says *"this was brilliant, and here is the chain of why"* — deep
   symbolic understanding at near-zero compute. The whole point the scaling paradigm optimizes away.
 
-*Status (2026-07-13): 14.1–14.5 PROVEN in miniature (the Regenesis MCP; significance 1.79→5.26 on a deep
-ruleset; the 19-style library built + discriminating). 14.6 built (outcome-integration + the surprise lens).
-Immediate next (off trickle-charge): the renderer legibility pass (§14.3), per-style exemplar-tuning (§14.5),
-and `understand_batch`+`promote` over the game corpora to let the library self-deepen (§14.4).*
+### 14.8 Win / Draw / Loss — one outcome axis, the draw as its neutral middle [BUILT 2026-07-14]
+
+The three outcomes are **not three systems** — they are the three settings of the navigate **outcome bank**
+(§14.7), and the draw is its **zero-point** (the neutral mirror between the two sides of the coin):
+
+| outcome | bank dir | the read | the arc (climax) |
+|---|---|---|---|
+| **WIN** | **+1** prevail | the style-arc completes | the 19 win-styles (§14.5) → *brilliant / strangled / …* |
+| **DRAW** | **0** hold | Genesis abstains from Victory/Tragedy → equilibrium | `chess_draw` → *neutralize → balanced → resilient* |
+| **LOSS** | **−1** refuted | the win-arc co-present with the fall (the surprise) | `chess_collapse` → *overreach → collapse* (the win-story the result breaks) |
+
+Proven on real games via the MCP: a **Petrosian draw** fires `chess_draw` (`neutralize`/`balanced`) with **no
+Tragedy** — the hold as *achievement*, not failure — and self-learns `mutual-restrain ⇒ balanced`; a **Tal
+loss** fires his win-arc (`dominant`/`hunt king`) **and** the fall (`ruined`/`fallen`) — the tragic collapse —
+and self-learns `defeat ⇒ fallen`. `game_renderer._outcome` states the result (`defeats`/`draws`) so the axis
+is grounded in the game, not asserted.
+
+**The draw is a strategy, and the ELO bank selects it.** Intentional drawing = deliberately navigating toward
+`outcome=0`, the *anti-strong-opponent* play: against a peer `navigate(outcome=+1)` (play to win); against a
+much stronger opponent where winning isn't on, `navigate(outcome=0)` and the draw arc (fortress / perpetual /
+neutralize) is what you route to — a draw *there* **is** the win. The **ELO bank chooses which outcome you
+play for**, the read tells you where you *are* on the axis, and navigate multiplies them into the move.
+Win-styles, draw-hold, and collapse are one continuous outcome-axis — the ELO-bracketed "best strategy is not
+a monolith," computed.
+
+**Outcome-modulation [BUILT — `scripts/navigate_moves.py::navigate_read`].** A win-frame co-present with a
+*loss* is the **illusion** the result refuted (Tal looked dominant, then fell); a win-frame with a *win* is
+real. So the ranking is modulated by **(fact-valence × subject-outcome)**: aligned facts (winner's climax,
+loser's fall, drawer's hold) surface; contradicting facts (the loser's win-arc) are dampened for the decision
+— *and their divergence IS the surprise the negative lens learns from.* This makes the winner's climax outrank
+the loser's, surfaces the fall on a loss, and leaves the draw neutral — one mechanism, the outcome bank folded
+into the read.
+
+*Status (2026-07-14): 14.1–14.5 PROVEN (Regenesis MCP; significance 1.79→**6.36** after the render fix; the
+19-style library discriminating). 14.3 render-legibility BUILT (flood 150→15). 14.6 outcome-integration +
+surprise lens built. 14.7 routing = ModelAtlas navigate (`navigate_moves.py`, proven). 14.8 win/draw/loss axis
+BUILT — `chess_draw` + `chess_collapse` arcs fire on real games; outcome-modulation (`navigate_read`) built.
+Immediate next: recast the collapse conjunction as distance-robust co-presence (Java-adjacency limit),
+per-style exemplar-tuning (§14.5), `understand_batch`+`promote` to self-deepen (§14.4). The play path is
+end-to-end in design: render(legible) → understand/significance → navigate(outcome, ELO) → the move.*

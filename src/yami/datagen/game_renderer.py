@@ -105,8 +105,9 @@ def _positional(board: chess.Board, move: chess.Move, name: str) -> list[str]:
     if moved in (chess.KNIGHT, chess.BISHOP) and from_rank == back_rank \
             and after["dev"] - before["dev"] >= 1:                       # a minor leaves the back rank
         events.append(f"{name} develops piece.")
-    if moved == chess.ROOK and _file_open(board, chess.square_file(move.to_square)):
-        events.append(f"{name} occupies file.")                          # rook to an open file
+    if moved == chess.ROOK and _file_open(board, chess.square_file(move.to_square)) \
+            and chess.square_file(move.from_square) != chess.square_file(move.to_square):
+        events.append(f"{name} occupies file.")                          # rook MOVED onto an open file (discrete, not shuffling along it)
     if moved == chess.PAWN and after["space"] - before["space"] >= 0.10:  # a real pawn break
         events.append(f"{name} advances pawn.")
     if after["opp_isolated"] - before["opp_isolated"] >= 1:              # created a weakness
@@ -115,13 +116,13 @@ def _positional(board: chess.Board, move: chess.Move, name: str) -> list[str]:
         events.append(f"{name} weakens structure.")
     if after["opp_open_files"] - before["opp_open_files"] >= 1:          # opened a file on their king
         events.append(f"{name} exposes king.")
-    if moved != chess.PAWN and ((mover == chess.WHITE and to_rank >= 5)
-                                or (mover == chess.BLACK and to_rank <= 2)):
-        events.append(f"{name} infiltrates rank.")                       # piece deep in enemy camp
+    if moved != chess.PAWN and ((mover == chess.WHITE and from_rank < 5 and to_rank >= 5)
+                                or (mover == chess.BLACK and from_rank > 2 and to_rank <= 2)):
+        events.append(f"{name} infiltrates rank.")                       # a NEW infiltration this move (CROSSED in, not shuffling deep)
     # --- STYLE primitives (the taxonomy's defining frames, from Yami signals) ---
     if not board.is_capture(move) and moved != chess.PAWN \
-            and before["opp_mobility"] - after["opp_mobility"] >= 0.03:   # a QUIET move that curbs the
-        events.append(f"{name} restrains opponent.")                     # opponent's mobility = prophylaxis
+            and before["opp_mobility"] - after["opp_mobility"] >= 0.12:   # a REAL mobility-curb JUMP (discrete
+        events.append(f"{name} restrains opponent.")                     # prophylaxis), not marginal per-move jitter
     if not before["connected_rooks"] and after["connected_rooks"]:       # rooks connect = coordination
         events.append(f"{name} coordinates rooks.")                     # (harmony)
     return events[:_MAX_POSITIONAL]
