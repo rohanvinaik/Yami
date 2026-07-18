@@ -8,8 +8,6 @@
 
 > **Note (July 2026) — the current direction:** The recognition layer is being rebuilt as a **Genesis story-understanding architecture**: a chess game is read as a *story*, and Patrick Winston's Genesis engine (revived at scale on GSE) derives its tactical and positional frames, the rising-action arc, and — the split that matters — separates the *per-game frames that win* from the *cross-game frame-of-frames that learn* what those frames can't yet see. Built and verified end-to-end this session (all three tiers fire on real games; brilliancy is computed as belief-revision surprise); not yet benchmarked as a player. This supersedes the hand-tuned coherence weights. **See [`docs/GENESIS_CHESS_ARCHITECTURE.md`](docs/GENESIS_CHESS_ARCHITECTURE.md).**
 
-The scaling paradigm answers chess with a trillion parameters. Yami answers it with twelve thousand and a stack of infrastructure — legal-move scoping, censors, a holographic coherence engine, an endgame book — and against opponents from a random mover up to Stockfish at its maximum calibrated strength, it does not lose.
-
 ---
 
 ## Results
@@ -55,13 +53,15 @@ Board → Legal moves → Tactical scoping + censors → Endgame/Opening
   → Legal verification
 ```
 
-**Key innovation: holographic multi-signal coherence.** The correct move exists as an interference pattern across 6 independent signal sources. When the signals agree (constructive interference), confidence is high; when they disagree, the system replans. This is the Informational Zero (OTP) principle: 0 means orthogonal, not absent.
+**Key innovation: Holographic multi-signal coherence.** The correct move exists as an interference pattern across 6 independent signal sources. When signals agree (constructive interference), confidence is high. When they disagree, the system replans. The Informational Zero (OTP) principle: 0 means orthogonal, not absent.
 
-**Adaptive play.** The system matches the strength of any opponent — aggressive against the weak, solid against the strong — and it never collapses, because the floor is "draw," not "lose."
+**Adaptive play:** The system matches the strength of any opponent. Against weak opponents, it plays aggressively and wins. Against strong opponents, it plays solidly and draws. It never collapses — the floor is "draw," not "lose."
 
-### Story-understanding layer (current direction)
+### Story-Understanding Layer (current direction)
 
-A chess game is a story; Genesis reads it. The infrastructure renders a game to who-does-what event-sentences (no chess judgment of its own — the verbs come from Yami's own move/signal machinery), and a stack of Genesis frame universes derives its meaning:
+A chess game is a story; Genesis reads it. The infrastructure renders a game to who-does-what
+event-sentences (no chess judgment of its own — verbs come from Yami's own move/signal machinery),
+and a stack of Genesis frame universes derives its meaning:
 
 ```
 Game (PGN) → deterministic renderer → who-does-what events
@@ -70,9 +70,12 @@ Game (PGN) → deterministic renderer → who-does-what events
   Tier 3  prescription  diagnostic-state → resolving-move = move selection  |  cross-game learning
 ```
 
-**Brilliancy as surprise:** a sacrifice's meaning is fixed by its continuation — a following checkmate *retracts* the naive "this player is lost," and that retraction is the learning signal. **Winning vs. learning:** the per-game frames recognize the arc to play it; the cross-game *frame-of-frames* maps the residual *outside* the frames — what they can't yet see. Full design: [`docs/GENESIS_CHESS_ARCHITECTURE.md`](docs/GENESIS_CHESS_ARCHITECTURE.md).
+**Brilliancy as surprise:** a sacrifice's meaning is fixed by its continuation — a following checkmate
+*retracts* the naive "this player is lost," and that retraction is the learning signal. **Winning vs.
+learning:** the per-game frames recognize the arc to play it; the cross-game *frame-of-frames* maps the
+residual *outside* the frames — what they can't yet see. Full design: [`docs/GENESIS_CHESS_ARCHITECTURE.md`](docs/GENESIS_CHESS_ARCHITECTURE.md).
 
-## The thesis
+## The Thesis
 
 The scaling paradigm spends trillions of parameters on structural work that infrastructure handles trivially. Yami decomposes chess into deterministic layers, fuses 6 independent signals holographically, and produces a 294K-parameter system that never loses — scoring ≥50% against opponents up to ELO 3190. The frontier that matters is **infrastructure quality vs. residual hardness**, not model size vs. performance.
 
@@ -85,7 +88,7 @@ The scaling paradigm spends trillions of parameters on structural work that infr
 | Code Quality | LintGate | Deterministic constraint checking |
 | Program Synthesis | ShortcutForge | 85% compilation via linter pipeline |
 
-## Quick start
+## Quick Start
 
 ```bash
 git clone https://github.com/rohanvinaik/Yami.git && cd Yami
