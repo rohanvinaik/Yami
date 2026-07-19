@@ -74,6 +74,18 @@ Before acting on a file you haven't read, before trying a third approach, before
 - `.claude/lintgate.yaml` - lint and ControlPlane configuration.
 <!-- LINTGATE:END context_map -->
 
+## Current Build State (2026-07-19 — the play-and-learn loop is the achieved system, likely FINAL design)
+The full stack is BUILT and RUNNING: render → recognize (System 1) → sound select → learn from every game
+(System 2). System 1 reads the game-so-far and names a plan (`play_navigate.py`); System 2 mines EVERY game
+per-move for BOTH bad moves (censors) and good moves (exemplars), recalled by nav-vector RESEMBLANCE (Kanerva),
+ELO-stratified (`learn_loop_v2.py::RiskOverlay`, `play_learn.py`, `climb.py`). Move choice = `theory −
+censor_penalty + exemplar_reward`. Learned state is LOCAL + gitignored (`data/censors.json`, `data/exemplars.json`,
+`data/trajectory.jsonl`, `data/yami_games.pgn`). **Yami ELO ~1000** (learning signal, tracked per game). Draws
+Stockfish ~1320; learned un-scripted strategy ("play the player"). RESUME the grind (plug-and-play):
+`PYTHONPATH=src python3 scripts/climb.py "0" <games> 90 data/censors.json`. Full design: `docs/GENESIS_CHESS_ARCHITECTURE.md`
+§13B (System-1↔System-2 composition), §13C (dual per-move learning), §13D (empirical status + ELO). DON'T re-derive
+toward ML/search — this is symbolic, experiential, Human-Window all the way down.
+
 ## Debt Tracking Policy
 
 - Known structural debt should be tracked in .claude/lintgate.yaml exemptions with ticket references.

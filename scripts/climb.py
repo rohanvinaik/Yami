@@ -40,14 +40,39 @@ def _pgn(g, elo, n):
     return hdr + body + f" {res}\n\n"
 
 
-def _log_trajectory(elo, g, library):
-    """Append one game to the learning-trajectory log: survival (plies) vs accumulated experience (library).
-    The SSL learning curve made concrete — as constraints (censors) accrue, the σ_sem descent should run
-    LONGER before the collapse (loss), then hold to a draw. One JSONL line per game, accumulating across runs."""
+ELO_START = 1000        # provisional starting rating (a beginner's; the running Elo ~= the score-consistent
+ELO_K = 24              # performance rating from here) · rating volatility per game
+
+
+def _elo_after(yami, opp, result):
+    """One Elo rating update: Yami's rating after a game vs an `opp`-rated Stockfish. score win/draw/loss =
+    1/0.5/0; expected = the logistic; the update pulls Yami toward its true strength game by game."""
+    s = {"win": 1.0, "draw": 0.5, "loss": 0.0}[result]
+    expected = 1.0 / (1.0 + 10 ** ((opp - yami) / 400.0))
+    return yami + ELO_K * (s - expected)
+
+
+def current_elo(traj=TRAJECTORY):
+    """Replay the whole game history → Yami's running ELO. THE learning-theory signal: a rating that rises as
+    it learns (single source of truth = the trajectory log; every game vs its known-rated opponent)."""
+    import json
+    import os
+    r = ELO_START
+    if os.path.exists(traj):
+        for line in open(traj):
+            d = json.loads(line)
+            r = _elo_after(r, d["elo"], d["result"])
+    return round(r)
+
+
+def _log_trajectory(elo, g, library, yami_elo):
+    """Append one game to the learning-trajectory log: survival (plies) + corrections (recall) + accumulated
+    experience (library) + Yami's running ELO after the game. The SSL learning curve made concrete — as
+    constraints accrue, the σ_sem descent runs LONGER before collapse, and the RATING climbs. One JSONL line/game."""
     import json
     with open(TRAJECTORY, "a") as f:
-        f.write(json.dumps({"elo": elo, "result": g["result"], "plies": g["plies"],
-                            "recalled": g["recalled"], "library": library}) + "\n")
+        f.write(json.dumps({"elo": elo, "result": g["result"], "plies": g["plies"], "recalled": g["recalled"],
+                            "library": library, "yami_elo": round(yami_elo)}) + "\n")
 
 
 def climb(skills, games_per, max_plies, overlay_path=None):
@@ -62,6 +87,8 @@ def climb(skills, games_per, max_plies, overlay_path=None):
     traps = []                                          # (fen, plan, elo, loser) across all brackets
     game_n = 0
     longest = {"plies": -1}
+    yami_elo = current_elo()                             # resume the running rating from the whole history
+    print(f"Yami's current estimated ELO: {yami_elo}", flush=True)
     for skill in skills:
         elo = SKILL_TO_ELO[skill]
         sf.configure({"Threads": 2, "Skill Level": skill})
@@ -79,13 +106,15 @@ def climb(skills, games_per, max_plies, overlay_path=None):
             if overlay_path:
                 overlay.save(overlay_path)              # persist per GAME (robust across a long grind)
                 reward.save(reward_path)
+            yami_elo = _elo_after(yami_elo, elo, g["result"])   # the rating climbs (or drops) with the result
             # LEARNING IN ACTION: `plies` = how far the game-story ran before the collapse (the σ_sem descent
-            # extending as constraints accrue, SSL §2.3); `recalled` = moves a learned signal changed THIS game
+            # extending as constraints accrue, SSL §2.3); `recalled` = moves a learned signal changed THIS game;
+            # `ELO` = the learning-theory tracking signal — a rating that rises as it learns
             print(f"  game {game_n} (Skill {skill}~{elo}): {g['result']:4} · {g['plies']:>3} plies · "
                   f"{g['recalled']} moves changed by recall · +{len(bad)} censors +{len(good)} exemplars · "
-                  f"lib {len(overlay.entries)}c/{len(reward.entries)}e",
+                  f"lib {len(overlay.entries)}c/{len(reward.entries)}e · ELO {round(yami_elo)}",
                   flush=True)
-            _log_trajectory(elo, g, len(overlay.entries))
+            _log_trajectory(elo, g, len(overlay.entries), yami_elo)
             with open(GAMES_PGN, "a") as f:                 # save the game so we can review its play
                 f.write(_pgn(g, elo, game_n))
             if g["plies"] > longest["plies"]:

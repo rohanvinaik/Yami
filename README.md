@@ -68,6 +68,10 @@ That one line produced strategy no one wrote. About ten games in, Yami drew a ga
 
 "Don't overextend, make the stronger side commit, hold the equal position" is a real, named strategy against a stronger opponent. Nobody handed it to Yami. It fell out of what the system learned *loses*. That is the whole thesis in one game. It did not learn chess as a set of rules. It learned to play the *player* — the way the chef reads the kitchen instead of reciting the recipe.
 
+It also learns what *works*, not only what fails: every game scores each of Yami's own moves against the judge and banks it by quality — a bad move as a censor to avoid, a near-best move as an exemplar to repeat — so a draw teaches as much as a defeat, and the good moves it banks are overwhelmingly *attacking* ones. A naive agent has no lean at all; Yami is acquiring an earned intent — to attack, disciplined by what it has learned loses. It is learning to try to *win*.
+
+**Where it is now.** Two dozen games in, it has never won, and has not needed to. Its rating — recomputed after every game against a known-strength opponent, and *itself* the learning signal — sits near **1000**: a real, raw beginner, earned entirely from games it played and lost, drawing a ~1320 Stockfish about a fifth of the time at genuinely club-shaped move quality (~50cp median). The sample is small and the number provisional. But a rating is a curve, and the whole thesis is that it climbs.
+
 ## Brilliancy is surprise
 
 A brilliant move is one that violates the frame you were reading and turns out to be right — a belief you held, refuted, and revised. Yami reads that with Genesis's trace-boundary retraction (revived Python-native in [Regenesis](https://github.com/rohanvinaik/Regenesis), 12 tests): a naive read expects the material loss to be a mistake, the continuation refutes it, and the surprise of the revision *is* the brilliancy. It is the exchange sac seen as the carrots that were always meant to be blended.

@@ -502,6 +502,33 @@ visible). The fix (Rohan, 2026-07-19) generalises the axis:
   — safe σ-preserving forgetting) and **promote to the next ELO bracket.** Pruning is the promotion step, not a
   background chore.
 
+### 13D. Empirical status + the ELO learning signal [MEASURED 2026-07-19]
+
+The play-and-learn loop RUNS. First 24 games at Skill-0 (~1320): **0W-5D-19L**, learned libraries at **~200
+censors + ~66 exemplars** (persisted local, gitignored). Measured facts:
+
+- **ELO tracking = the learning signal** (`climb.py`: `_elo_after` / `current_elo`, logged per game to
+  `data/trajectory.jsonl` as `yami_elo`). A rating recomputed after every game vs its known-rated opponent — a
+  curve that rises as it learns. **Current: ~1000** (946 score-consistent performance rating; ~987 running Elo
+  from a 1000 provisional). Move quality is genuinely beginner-competent: **median cp_loss ~50** (its cleanest
+  games — the recent draws — ~35-42cp), drifting faintly down (~68 → ~55 median-of-medians over the run, n=15,
+  NOISY — indicative, not established; the real trend wants the long sustained run).
+- **The learning is GENUINE, not brittle one-off noise** (probed): (a) **context-sensitivity** — 12 moves are
+  BOTH censored and exemplared (the same move good-in-one-position, bad-in-another; blanket noise has zero
+  overlap); (b) **resemblance generalization** — recall fires **17-33 moves/game** (~70% of moves), so one-off
+  lessons shape play in every RESEMBLING position, the opposite of an exact-match lookup table; (c) recurring
+  lessons are chess-sensible (`d2d4` banked good ×4, `c3d5` censored as a recurring trap).
+- **It acquires EARNED INTENT** (Rohan's read, 2026-07-19): a naive agent has NO attack/defend lean; Yami's
+  GOOD moves are **86% ATTACK_KING** — it is learning that attacking is what WORKS, tempered by the censors that
+  punish reckless attacks. The "over-eager attacker" was not a flaw: it is phase-1 restraint (attack-censors) +
+  phase-2 aggression (attack-exemplars) = *attack to win, not blindly*. The will to win, disciplined by loss.
+- **Emergent un-scripted strategy**: it drew Stockfish ~1320 by trading to equality and HOLDING — every
+  committal move its history punished got penalized, leaving the SEE-safe hold on top (a bounced rook), then it
+  made the stronger side commit first and navigated to the draw. "Don't overextend, make the stronger side
+  commit, hold the equal position" — a named anti-stronger-opponent strategy, un-instructed, fallen out of what
+  the system learned *loses*. It learned to play the PLAYER, not the board (which is what the ELO-stratified,
+  outcome-grounded censors were built to do — §13A/§13B). The design is likely FINAL; the ascent is the long run.
+
 ## 14. The Regenesis-Native Architecture — low-compute chess *understanding* (the complete build)
 
 *This is the synthesis the whole document points at: how Yami reads a game as a story and articulates
