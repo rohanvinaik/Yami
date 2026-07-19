@@ -1,102 +1,81 @@
 # Yami 闇
 
-**The missing infrastructure layer for LLM chess.**
+**Read the chess game as a story, and recognize the move — instead of searching a tree for it.**
 
-12,450 parameters. $0 compute. Infrastructure-first chess AI.
+<p align="center">
+  <a href="https://github.com/rohanvinaik/Yami/actions"><img src="https://github.com/rohanvinaik/Yami/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-3367d6.svg" alt="License: MIT"></a>
+  <a href="https://www.python.org/downloads/"><img src="https://img.shields.io/badge/python-3.11+-3367d6.svg" alt="Python 3.11+"></a>
+</p>
 
-> **Note (March 2026):** The system is in active development. The original 628-game benchmark used infrastructure-only play (`use_neural=False`) — the "never loses" result came from the censor stack and legal-move fallback, not from learned signal fusion. The current architecture replaces hand-tuned coherence weights with a 12K-parameter learned fusion model trained on multi-ELO Stockfish data. See `docs/SIGNAL_FUSION_DESIGN.md` for the current design.
+`chess as a Genesis story · recognition, not search · every rule a human could state · deterministic infrastructure + a tiny recognition residual`
 
-> **Note (July 2026) — the current direction:** The recognition layer is being rebuilt as a **Genesis story-understanding architecture**: a chess game is read as a *story*, and Patrick Winston's Genesis engine (revived at scale on GSE) derives its tactical and positional frames, the rising-action arc, and — the split that matters — separates the *per-game frames that win* from the *cross-game frame-of-frames that learn* what those frames can't yet see. Built and verified end-to-end this session (all three tiers fire on real games; brilliancy is computed as belief-revision surprise); not yet benchmarked as a player. This supersedes the hand-tuned coherence weights. **See [`docs/GENESIS_CHESS_ARCHITECTURE.md`](docs/GENESIS_CHESS_ARCHITECTURE.md).**
+A chess game is a story. Yami renders it as one — plain who-does-what events, with no chess judgment of its own — and hands it to Genesis, Patrick Winston's story-understanding engine, revived at scale on GSE. Here is the Opera Game, read move by move:
 
-The scaling paradigm answers chess with a trillion parameters. Yami answers it with twelve thousand and a stack of infrastructure — legal-move scoping, censors, a holographic coherence engine, an endgame book — and against opponents from a random mover up to Stockfish at its maximum calibrated strength, it does not lose.
+```
+$ yami reads the Opera Game (Morphy, 1858)
+
+  Morphy develops piece.   Duke develops piece.
+  Morphy captures pawn.    Duke captures knight.
+  Morphy captures bishop.  Duke exposes king.
+  …
+  Morphy coordinates rooks.
+  Morphy captures knight.  Duke captures rook.
+  Morphy forks piece.      Morphy checks king.
+  Duke captures queen.       ← Morphy gave the queen away
+  Morphy checkmates king.    ← the loss was the plan
+```
+
+41 event-sentences, three layers of frames fired, ending — correctly — on *Morphy checkmates king*. Nothing here was generated. The renderer states what happened; Genesis derives what it means, and it carries the rule behind every inference. The queen was not blundered. It was spent, and the surprise that the loss was the plan is exactly what the engine reads as brilliancy.
 
 ---
 
-## Results
+## The robot chef
 
-**54 wins, 574 draws, 0 losses** across 628 benchmark games against opponents from Random Player through Stockfish at ELO 3190 (maximum calibrated strength):
+Hold one picture before any of the machinery. The hardest jobs to automate are not the big-think ones — run a company, do conceptual math. They are jobs like head chef in a working kitchen. The line cook watching your brown sauce gets distracted; the sauce over-reduces. Thirty seconds for a human to fix. But the kitchen is a coupled system under two scarcities at once, time and space, and every local fix spends a shared resource and displaces a coupled task. Thin the sauce, and you cost burner-minutes; the fish that needed the burner slips; the veg steaming for the fish overcooks; you park it, but now the shared steamer is occupied and the pastry station is under floppy carrots. A thirty-second lapse propagates along the coupling until it reaches something you cannot take back.
 
-| Opponent | W | D | L | Score | Est. ELO | 95% CI |
-|----------|---|---|---|-------|----------|--------|
-| Random Player | 39 | 3 | 0 | 96.4% | 451 | [255, 647] |
-| Engine Lvl 1-10 | 2 | 208 | 0 | 50.5% | — | — |
-| SF ELO 1500 | 2 | 40 | 0 | 52.4% | 1,517 | [1413, 1620] |
-| SF ELO 1900 | 1 | 41 | 0 | 51.2% | 1,908 | [1805, 2012] |
-| SF ELO 2200 | 2 | 40 | 0 | 52.4% | 2,217 | [2113, 2320] |
-| **SF ELO 2500** | **2** | **40** | **0** | **52.4%** | **2,517** | **[2413, 2620]** |
-| **SF ELO 2800** | **2** | **40** | **0** | **52.4%** | **2,817** | **[2713, 2920]** |
-| **SF ELO 3190** | **2** | **40** | **0** | **52.4%** | **3,207** | **[3103, 3310]** |
+The skill that resolves that is not computation. It is understanding the load-bearing decision points: the temporal constraints (the sauce is on a clock), the resource constraints (the shared steamer), and the acceptable losses (the carrots are cheap — sacrifice them to save the dish). What you need is a system that can tell the *story of the kitchen's operation*.
 
-**Peak ELO: 3,207** [3103–3310] 95% CI — wins against Stockfish at maximum calibrated strength.
-**Ceiling not found.** The system wins at every level tested. Zero losses at any level.
+Chess is the kitchen, term for term. Time scarcity is **tempo** — the passer is on a clock, the attack must land before the defense consolidates. Space scarcity is **the board** — two pieces cannot hold one square. Acceptable losses are **the sacrifice** — give up the exchange to keep the initiative, and brilliancy is the surprise that reveals the ruined carrots were always meant to be blended. The cascade to fire is **the collapse** — one tempo lost, one weakness fixed, a won game falling apart move by move. So Yami does not simulate every kitchen-state. It recognizes the two things that are load-bearing *right now*.
 
-| | Yami (fusion v1) | GPT-5 (1,087 ELO) | Claude Opus 4.5 (446 ELO) |
-|---|---|---|---|
-| **Parameters** | **12,450** | ~1T+ | ~1T+ |
-| **Cost/game** | **$0** | ~$5-10 | ~$2-5 |
-| **Training** | **2 minutes** | Months | Months |
-| **Inference** | **<10ms** | ~5-10s | ~5-10s |
+## Recognition, not search
 
-## Architecture
+Most of chess is not hard. Legal moves, tactical motifs, opening theory, endgame tablebases — all deterministic, all microsecond-cost, all handled by infrastructure. The scaling paradigm spends trillions of parameters on work that does not need them. Yami spends none of them there. It decomposes the position into layers, each of which does its cheap work deterministically and eliminates candidates, until roughly thirty legal moves have collapsed to **three to five annotated candidates**. What is left is not a search problem. It is a recognition problem, small enough for a tiny model — the residual the infrastructure could not resolve on its own.
+
+This is read out of a learning theory, not chosen for taste. A domain is a closed artifact inside an open field, and only the artifact is specifiable. Chess's open field is perfect play over the 10⁴⁴ game tree — intractable, and never claimed. The closed artifact is legal moves, tactics, endgames, and the named-frame vocabulary — finite, and derivable.
+
+## Every layer is a rule a human could state
+
+Nothing in Yami is an opaque weight. The whole stack is intensional — rules a person could state, follow, and recognize, the **Human Window** of Michie and Kopec — because that intelligibility is what lets each layer carry an *external* warrant instead of certifying itself:
 
 ```
-Board → Legal moves → Tactical scoping + censors → Endgame/Opening
-  → Holographic Coherence Engine:
-      6-Bank Navigator (729-bin ternary navigation)
-      Strategy Library (20 encoded strategies)
-      Temporal Society of Mind (6 specialist agents)
-      GM Pattern Database (empirical move frequencies)
-      K-Line Memory (7,723 winning patterns)
-      2-Ply Look-Ahead (mate threat detection)
-      Opponent Profiler (behavioral risk calibration)
-      → OTP Ternary Interference Pattern Detection
-  → Candidate filtering (3-5 annotated moves)
-  → Neural selection (294K Balanced Sashimi model)
-  → Legal verification
+LEGAL      the hard kernel — python-chess is the judge
+CENSORS    near-miss "don't" — blunders made UNrepresentable, not penalized
+FRAMES     strategic heuristics — intensional rules, from literature and from induction
+ROUTING    style-laws — a Society-of-Mind picks the style per move, regime by regime
+WARRANT    Stockfish — the exogenous judge of which routing actually wins
 ```
 
-**Key innovation: holographic multi-signal coherence.** The correct move exists as an interference pattern across 6 independent signal sources. When the signals agree (constructive interference), confidence is high; when they disagree, the system replans. This is the Informational Zero (OTP) principle: 0 means orthogonal, not absent.
+The censor layer holds a unification worth naming: *near-miss is one mechanism across four systems* — Yami's `negative_learning`, the Genesis retraction that refutes a belief when a naive read almost held, the hard censors of `law_as_architecture`, and the "break the rule at square 11" of the Knight's Tour. A censor learned on one side flows to the others.
 
-**Adaptive play.** The system matches the strength of any opponent — aggressive against the weak, solid against the strong — and it never collapses, because the floor is "draw," not "lose."
+Two axes run over the stack. **Learning grows the library** — the frame-of-frames driver induces frames from games bottom-up and extracts them from the literature top-down, and it can discover not just tactics but entirely new strategies. **Routing applies the library** — the Society-of-Mind selects the style-law for the move in front of it, recalled by resemblance and stratified by regime.
 
-### Story-understanding layer (current direction)
+## It learned to play the player, not the rules
 
-A chess game is a story; Genesis reads it. The infrastructure renders a game to who-does-what event-sentences (no chess judgment of its own — the verbs come from Yami's own move/signal machinery), and a stack of Genesis frame universes derives its meaning:
+Yami has a working System-1 → System-2 loop. System 1 recognizes a plan and plays it; System 2 mines the moves that lost and folds them back as censors, recalled later by resemblance (a Kanerva hamming lookup over navigation vectors). Its move choice is one line — **theory − censor_penalty** — where the censors are the moves that have lost before, against this kind of opponent.
 
-```
-Game (PGN) → deterministic renderer → who-does-what events
-  Tier 1  events        tactical (sacrifice/fork/checkmate) + positional (cramped/exposed/isolated) frames
-  Tier 2  architecture  the rising-action ARC over the trajectory (ascendancy → domination → inevitable)
-  Tier 3  prescription  diagnostic-state → resolving-move = move selection  |  cross-game learning
-```
+That one line produced strategy no one wrote. About ten games in, Yami drew a game against Stockfish, and the way it drew is the tell. It traded down to an equal position and held it. In a roughly equal spot, every committal move its history has punished gets penalized, so what survives on top is the SEE-safe, non-destabilizing move — and when every move that could spoil the position has been tagged "this kind of move lost," what is left is a rook, bounced back and forth. "Refuse to move into a worse position" is not the absence of a plan. It is the censor mechanism firing. Yami sat on the equal position and made Stockfish commit first (19…Bb4+); only then did it engage, and it navigated the complications to the draw.
 
-**Brilliancy as surprise:** a sacrifice's meaning is fixed by its continuation — a following checkmate *retracts* the naive "this player is lost," and that retraction is the learning signal. **Winning vs. learning:** the per-game frames recognize the arc to play it; the cross-game *frame-of-frames* maps the residual *outside* the frames — what they can't yet see. Full design: [`docs/GENESIS_CHESS_ARCHITECTURE.md`](docs/GENESIS_CHESS_ARCHITECTURE.md).
+"Don't overextend, make the stronger side commit, hold the equal position" is a real, named strategy against a stronger opponent. Nobody handed it to Yami. It fell out of what the system learned *loses*. That is the whole thesis in one game. It did not learn chess as a set of rules. It learned to play the *player* — the way the chef reads the kitchen instead of reciting the recipe.
 
-## The thesis
+## Brilliancy is surprise
 
-The scaling paradigm spends trillions of parameters on structural work that infrastructure handles trivially. Yami decomposes chess into deterministic layers, fuses 6 independent signals holographically, and produces a 294K-parameter system that never loses — scoring ≥50% against opponents up to ELO 3190. The frontier that matters is **infrastructure quality vs. residual hardness**, not model size vs. performance.
+A brilliant move is one that violates the frame you were reading and turns out to be right — a belief you held, refuted, and revised. Yami reads that with Genesis's trace-boundary retraction (revived Python-native in [Regenesis](https://github.com/rohanvinaik/Regenesis), 12 tests): a naive read expects the material loss to be a mistake, the continuation refutes it, and the surprise of the revision *is* the brilliancy. It is the exchange sac seen as the carrots that were always meant to be blended.
 
-## Lineage
+## Lineage and status
 
-| Domain | System | Result |
-|--------|--------|--------|
-| Theorem Proving | Wayfinder | 63% of Mathlib, 22M params, laptop |
-| **Chess** | **Yami** | **0 losses / 628 games, peak 3207 ELO, 294K params** |
-| Code Quality | LintGate | Deterministic constraint checking |
-| Program Synthesis | ShortcutForge | 85% compilation via linter pipeline |
-
-## Quick start
-
-```bash
-git clone https://github.com/rohanvinaik/Yami.git && cd Yami
-pip install -e ".[dev]"
-python scripts/benchmark_full_metrics.py --games 42
-```
-
-## Name
-
-闇 (yami) — darkness, the unseen. The infrastructure works in the dark.
+Yami is Genesis-native: the tactical, positional, and rising-action frame universes are authored Genesis rules; the deterministic renderer turns a PGN into clean event-sentences with zero neural judgment; brilliancy and cross-game learning run on Regenesis. Built and verified so far: the renderer, the three frame layers, the Scale-0 candidate seam, live recognition-to-move play, the System-1→System-2 play-and-learn loop, resemblance recall, and a 19-master roster to learn from. Style routing and the frame library are the active build. The full architecture is in [`docs/GENESIS_CHESS_ARCHITECTURE.md`](docs/GENESIS_CHESS_ARCHITECTURE.md); the dependency-ordered plan is in [`docs/GENESIS_CHESS_SCOPE.md`](docs/GENESIS_CHESS_SCOPE.md).
 
 ---
 
-*98 tests. Lint clean. Zero losses. The Wayfinder thesis applied to chess.*
+MIT — Rohan Vinaik. A chess game is a story; Yami reads it on [Genesis](https://github.com/rohanvinaik/Regenesis).
