@@ -270,12 +270,27 @@ Inherited from the Genesis instrument method (non-negotiable):
 | Composition thermometer (metric) | `scripts/style_composition_probe.py` | BUILT |
 | Literature miner (U3, in progress) | `scripts/u3_mine_literature.py` → `data/genesis_roster/u3_atoms.jsonl` | ACTIVE |
 | Roster inputs (19 masters) | `data/genesis_roster/` (stories, labels, PGNs) | BUILT |
+| Live recognition → move (System 1) | `scripts/play_navigate.py` (`recognized_plan`, `render_live`) | BUILT |
+| U7 recognition vs Stockfish (judge) | `scripts/play_stockfish.py` | BUILT |
+| U11 System-1→System-2 play-learn loop | `scripts/play_learn.py` (recognition plan → `RiskOverlay` learning) | BUILT & PROVEN |
+| System-2 resemblance recall (Kanerva) | `scripts/learn_loop_v2.py::RiskOverlay` (nav-vector hamming recall) | BUILT & PROVEN |
+| ELO-bracketed climbing loop | `scripts/climb.py` (per-regime censor accumulation) | BUILT (machinery) |
 
 ## 10. Status & Roadmap
 
 **Built & verified (frame engine):** all three tiers fire on a real game; brilliancy = surprise with the
 corrected retraction; the deterministic renderer closes the PGN → Genesis pipeline; discrimination holds
 across brilliancy / positional / draw / overreach (each reads differently, draws abstain).
+
+**Built & verified (the PLAY-AND-LEARN loop, 2026-07-19) — the complete System-1 → System-2 stack (§13B).**
+Live recognition→move (System 1: render the game-so-far → Regenesis `understand` → `recognized_plan`, proven on
+Morphy's `Ne6+` recovered by *recognition*) drives the sound selector through a single `plan=` seam; System 2
+(the classical experiential learner) carves **near-miss censors from Yami's own Stockfish losses**, recalls them
+by **nav-vector resemblance** (Kanerva K-line), and stratifies them by **ELO regime** — accumulate per bracket,
+climb. All demonstrated: recognition→learning re-prioritizes off learned traps (5/5), resemblance recall grades
+gracefully (4/4 safer), regime separation holds (a 1320-trap silent at 1420). **The architecture is complete;
+the ascent to strong play is sustained running of the built loop.** Scripts: `play_navigate` / `play_stockfish`
+/ `play_learn` / `climb`; `learn_loop_v2::RiskOverlay` (resemblance). This is where Yami LEARNS chess.
 
 **Built & verified (structural interface + metric):** U1 Scale-0 → frame seam (`candidate_frames.py`,
 measure passes); the composition thermometer (`style_composition_probe.py`) reproduced the 78%-coarse/
@@ -407,11 +422,57 @@ penalty (not a hard ban) = correct because a lost move is *risky*, not *impossib
 for illegal + mate-in-1, which `pick` already makes unrepresentable). The mature System 2 is a separate future
 build; the overlay is its seed.
 
-*Status (2026-07-13): 1–3 wired (`prescribe_taste.py`); 4's turning-point primitive proven on a Capablanca
-loss (+273 → −281 located); the soft overlay proven to re-prioritize off learned traps 5/5 (no ban).
-**A: the safety-seeking rethink — BUILT & PROVEN** (`learn_loop_v2.py`, `SAFETY_GAIN` gated on rethink
-pressure): re-prioritizes off traps 5/5 AND now 5/5 toward a Stockfish-SAFER move (was 3/5), incl.
-`Kd1(−9998, into mate) → Qd2(−602)`. Next — **B: the per-style negative lens** from the corpus's losses.*
+### 13B. The two systems COMPOSE through the plan — recognition generates, experience censors [BUILT & PROVEN]
+
+The join between System 1 and System 2 is a **single parameter**, not a new pipeline: `rank_candidates(board,
+elo, overlay, plan=)` (`learn_loop_v2.py`) accepts an externally-supplied plan, so System 1's *recognized*
+plan — `render_live(game-so-far)` → Regenesis `understand` → `recognized_plan` — drives the *same* proven
+selector the heuristic `suggest_plan` did. **System 1 GENERATES the plan (Stockfish judges, never selects);
+the RiskOverlay REFINES the move (learned from Yami's own Stockfish losses).** `scripts/play_learn.py` closes
+the loop: recognition names the plan → `pick` selects → Yami's losses are mined
+(`mine_negative_examples_from_evals`) → `overlay.learn(recognized_plan, elo, uci, drop)` → recall re-prioritizes.
+
+This is the architectural payoff of §13A, and it resolves a live design trap. The tactical soundness a *single
+read cannot own* — significance **zeroes material by design** (correct for reading brilliancy, blind to "don't
+hang the queen"), and brilliancy=surprise is resolved by the *continuation*, which does not exist at play-time —
+is supplied by the **separate experiential system, learned from failure**. A move Yami cannot statically see is
+bad is caught by EXPERIENCE (play → lose → mine the near-miss → carve the censor → recall by context), **not by
+making the read a tactical guard** (the discarded "forced-line" approach — the §13A conflation error). Proven
+2026-07-19: one lost game (38 plies) taught **7** risk weights keyed on the *recognition* plan; at every learned
+trap the loop re-prioritized off it (**5/5**), 4/5 to a Stockfish-safer move — including a poisoned `Nxd5` no
+static read could refute.
+
+**The recall is now by RESEMBLANCE, not exact key [BUILT & PROVEN 2026-07-19].** The proto's `(plan, elo, uci)`
+key was position-BLIND — it penalized a move wherever that plan/ELO held. The mature `RiskOverlay` stores each
+near-miss with the **6-bank ternary `nav_vector`** it lost in (the project's own balanced-ternary codebook —
+`navigator.NavigationVector`, no HDC layer bolted on) and recalls a move's risk as its accumulated eval-drop
+**weighted by graded hamming resemblance** between the current position and where it lost (Kanerva K-line / SDM,
+`law_as_architecture.md` §6). Full penalty at identity (so the exact-trap re-prioritization is preserved),
+graceful decay, and **zero at full mismatch** — a trap generalizes to positions that *rhyme* with it and stays
+silent where the position is dissimilar, the over-reach the flat key could not avoid. Confirmed end-to-end: the
+play-learn loop re-prioritized off every learned trap (**4/4, all to a Stockfish-safer move**, incl.
+`Qd2(−9994) → h3(−959)`). Regime = (plan, ELO); resemblance = nav.
+
+**ELO-BRACKETED CLIMBING — the machinery BUILT & DEMONSTRATED [2026-07-19].** `scripts/climb.py` reuses the
+loop verbatim, keyed per ELO bracket (`benchmark_elo.SKILL_TO_ELO`: Skill 0≈1320, 2≈1500, …). A bounded run
+(2 regimes × 2 games) demonstrated all three climbing properties: (1) **per-bracket accumulation** — 11 censors
+mined from the 1320 regime's losses, +11 keyed to the 1500 regime (regime-tagged, 22 total); (2) **recall by
+regime + resemblance** — 7/8 learned traps re-prioritized, 6 to a Stockfish-safer move; (3) **regime
+SEPARATION** — a `g1f3` trap carries penalty **2.04 at its own ~1320 regime, 0.00 at ~1420** (§8: a coefficient
+means one thing in a regime, another across one). ⚠ HONEST: this is the climbing MACHINERY, not a strong player
+yet — Yami went 0W-0D-4L at 2 games/bracket; the actual ascent to wins needs SUSTAINED play (many games per
+bracket so each regime's censor library fills). The infrastructure for that climb is complete and correct;
+running it to measurable ELO gain is compute (per-move recognition ≈7.6s), best off trickle-charge.
+
+*Status (2026-07-19): 1–3 wired (`prescribe_taste.py`); 4's turning-point primitive proven on a Capablanca
+loss (+273 → −281 located). **A: the safety-seeking rethink — BUILT & PROVEN** (`learn_loop_v2.py`):
+re-prioritizes off traps 5/5, 5/5 toward a Stockfish-SAFER move, incl. `Kd1(−9998) → Qd2(−602)`. **The
+System-1(recognition)→System-2(learning) composition — BUILT & PROVEN** (`play_learn.py`, the `plan=` seam):
+recognition-keyed near-miss learning re-prioritizes off traps 5/5 (4/5 safer). **Kanerva RESEMBLANCE recall —
+BUILT & PROVEN** (`RiskOverlay` now recalls by graded hamming over the ternary nav-vector; 4/4 re-prioritized,
+4/4 safer). **ELO-bracketed climbing MACHINERY — BUILT & DEMONSTRATED** (`climb.py`; per-regime accumulation,
+resemblance recall, regime SEPARATION proven — a 1320-trap silent at 1420). Not a strong player yet (0W-0D-4L @
+2 games/bracket) — the ascent to wins is SUSTAINED play, compute-bound. Next — run the climb off trickle-charge.*
 
 ## 14. The Regenesis-Native Architecture — low-compute chess *understanding* (the complete build)
 

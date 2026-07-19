@@ -30,16 +30,36 @@ _GM = GMPatternDB("data/gm_patterns.db")
 
 
 class RiskOverlay:
-    """(plan_type, elo_bracket, move_uci) → accumulated disaster risk. Soft penalty, not a blacklist."""
+    """The near-miss store, recalled by RESEMBLANCE (Kanerva K-line / SDM, `law_as_architecture.md` §6).
+
+    Each learned trap is stored with the CONTEXT it lost in — the 6-bank ternary `nav_vector` (the project's
+    own balanced-ternary codebook, `navigator.NavigationVector`). A move's penalty in a NEW position is the
+    accumulated eval-drop of that move's past losses, each weighted by how much the current position RESEMBLES
+    the position where it lost — graded hamming similarity over the 6 banks, degrading gracefully to 0 at full
+    mismatch. This replaces the position-BLIND exact `(plan, elo, uci)` key: a trap now generalizes to
+    positions that RHYME with it, and does NOT fire where the position is dissimilar (the old key's over-reach).
+    Regime = (plan, ELO); resemblance = nav. Soft penalty, never a blacklist."""
+
     def __init__(self):
-        self.risk: dict[tuple, float] = {}
+        self.entries: list[tuple] = []          # (plan, elo, uci, nav_tuple, eval_drop)
 
-    def learn(self, plan: str, elo: int, uci: str, eval_drop: int) -> None:
-        k = (plan, elo, uci)
-        self.risk[k] = self.risk.get(k, 0.0) + eval_drop
+    def learn(self, plan: str, elo: int, uci: str, nav, eval_drop: int) -> None:
+        self.entries.append((plan, elo, uci, tuple(nav), eval_drop))
 
-    def penalty(self, plan: str, elo: int, uci: str) -> float:
-        return self.risk.get((plan, elo, uci), 0.0) / 200.0   # cp → rank-score units
+    @staticmethod
+    def _resemblance(a: tuple, b: tuple) -> float:
+        """Graded hamming similarity over the ternary banks: 1.0 at identity → 0.0 at full mismatch."""
+        if not a or len(a) != len(b):
+            return 0.0
+        d = sum(x != y for x, y in zip(a, b))   # NavigationVector.hamming_distance, tuple form
+        return max(0.0, 1.0 - d / len(a))
+
+    def penalty(self, plan: str, elo: int, uci: str, nav) -> float:
+        """Σ over this move's past losses (same plan+ELO regime) of eval_drop × context-resemblance."""
+        nav = tuple(nav)
+        risk = sum(drop * self._resemblance(nav, n)
+                   for p, e, u, n, drop in self.entries if p == plan and e == elo and u == uci)
+        return risk / 200.0                     # cp → rank-score units
 
 
 SAFETY_GAIN = 1.2   # how hard a triggered rethink pulls toward safety (0 = pure theory de-prioritization)
@@ -62,20 +82,25 @@ def _sat(x):
     return x / (x + 1.0)
 
 
-def rank_candidates(board, elo, overlay=None):
+def rank_candidates(board, elo, overlay=None, plan=None):
     """Theory rank (plan + gm win-rate) − learned risk penalty + a SAFETY term gated on rethink pressure.
 
     A: when this (plan, elo) regime carries a learned trap (max penalty > 0), route the reshuffle toward the
     SEE-safest / lowest-learned-risk survivor — not the next tactically-blind theory move. No trap → pure
-    theory (System 1 unchanged). Safety = internal SEE + the recalled schema (via −pen); never live Stockfish."""
+    theory (System 1 unchanged). Safety = internal SEE + the recalled schema (via −pen); never live Stockfish.
+
+    `plan` (a PlanTemplate): if supplied, it is the plan the move must enact — this is the seam where SYSTEM 1
+    RECOGNITION drives the selector (understand → recognized_plan). None = the heuristic `suggest_plan` baseline."""
     scoped = scope_moves(board)
     sound = [m for m in scoped if m.see_value >= -50 and not _allows_mate_in_1(board, m.move)] or scoped
     nav = compute_navigation_vector(board)
-    plan = suggest_plan(evaluate_position(board))
+    if plan is None:
+        plan = suggest_plan(evaluate_position(board))
     ranked = rank_moves(sound, plan, board)
     win = {s.move_uci: s.win_rate for s in _GM.query(board, nav, top_k=3) if s.games_seen >= 1}
 
-    pens = {r.scoped_move.move.uci(): (overlay.penalty(plan.plan_type.name, elo, r.scoped_move.move.uci())
+    nav_t = nav.as_tuple()
+    pens = {r.scoped_move.move.uci(): (overlay.penalty(plan.plan_type.name, elo, r.scoped_move.move.uci(), nav_t)
                                        if overlay else 0.0) for r in ranked}
     rethink = _sat(max(pens.values(), default=0.0))            # 0 when nothing learned here → theory leads
 
@@ -88,8 +113,8 @@ def rank_candidates(board, elo, overlay=None):
     return sorted(ranked, key=score, reverse=True), plan
 
 
-def pick(board, elo, overlay=None):
-    ranked, _ = rank_candidates(board, elo, overlay)
+def pick(board, elo, overlay=None, plan=None):
+    ranked, _ = rank_candidates(board, elo, overlay, plan)
     for r in ranked:
         if r.scoped_move.move in board.legal_moves:
             return r.scoped_move.move
@@ -147,12 +172,12 @@ def main():
             for ne in mine(sf, g):
                 b = chess.Board(ne.fen)
                 plan = suggest_plan(evaluate_position(b)).plan_type.name
-                overlay.learn(plan, ELO, ne.move_uci, ne.eval_drop)
+                overlay.learn(plan, ELO, ne.move_uci, ne.nav_vector, ne.eval_drop)
                 disasters.append((ne.fen, ne.move_uci, ne.eval_drop, plan, chess.WHITE if g["yami_white"] else chess.BLACK))
         if len(disasters) >= 5:
             break
 
-    print(f"learned {len(overlay.risk)} risk weights from {len(disasters)} disasters\n", flush=True)
+    print(f"learned {len(overlay.entries)} risk weights from {len(disasters)} disasters\n", flush=True)
     print("TARGETED — at each learned trap: did the overlay re-prioritize to a SAFER move?", flush=True)
     changed = safer = 0
     for fen, trap_uci, drop, plan, loser in disasters[:5]:

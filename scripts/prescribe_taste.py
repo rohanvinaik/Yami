@@ -36,11 +36,12 @@ def _allows_mate_in_1(board: chess.Board, move: chess.Move) -> bool:
     return allows
 
 
-def prescribe(board: chess.Board):
-    """Narrative → frame → moves, with the TACTICAL BASELINE + outcome prescription both ON.
+def prescribe_with_plan(board: chess.Board, plan):
+    """The SOUND selector, given a PLAN (a PlanTemplate). The tactical BASELINE + outcome prescription both ON.
     Baseline: never hang material (SEE) or allow mate-in-1 (keep the kitchen from burning). Prescription:
-    among the SOUND moves, prefer the one that WON here (`gm_patterns` win_rate), narrative-fit as tie-break."""
-    plan = suggest_plan(evaluate_position(board))            # "this position is a narrative about X"
+    among the SOUND moves, prefer the one that WON here (`gm_patterns` win_rate), narrative-fit as tie-break.
+    The plan is supplied from OUTSIDE — recognition gates this selector (U7): understand names the plan,
+    this machinery picks the sound move that enacts it. Returns (plan, ranked)."""
     scoped = scope_moves(board)
     # TACTICAL BASELINE: drop moves that lose material on the exchange or allow immediate mate.
     sound = [m for m in scoped if m.see_value >= -50 and not _allows_mate_in_1(board, m.move)]
@@ -52,6 +53,13 @@ def prescribe(board: chess.Board):
     # re-rank: outcome-grounded moves first (by win-rate), then narrative-fit as the tie-break/fallback
     ranked.sort(key=lambda r: (winning.get(r.scoped_move.move.uci(), -1.0), r.alignment), reverse=True)
     return plan, ranked
+
+
+def prescribe(board: chess.Board):
+    """The HEURISTIC-plan baseline: derive the plan from the position (suggest_plan), then the sound selector.
+    (U7 replaces the plan SOURCE with recognition — see prescribe_with_plan.)"""
+    plan = suggest_plan(evaluate_position(board))            # "this position is a narrative about X"
+    return prescribe_with_plan(board, plan)
 
 
 def yami_move(board: chess.Board) -> chess.Move | None:
