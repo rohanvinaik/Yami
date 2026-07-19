@@ -74,7 +74,7 @@ A brilliant move is one that violates the frame you were reading and turns out t
 
 ## Lineage and status
 
-Yami is Genesis-native: the tactical, positional, and rising-action frame universes are authored Genesis rules; the deterministic renderer turns a PGN into clean event-sentences with zero neural judgment; brilliancy and cross-game learning run on Regenesis. Built and verified so far: the renderer, the three frame layers, the Scale-0 candidate seam, live recognition-to-move play, the System-1→System-2 play-and-learn loop, resemblance recall, and a 19-master roster to learn from. Style routing and the frame library are the active build. The full architecture is in [`docs/GENESIS_CHESS_ARCHITECTURE.md`](docs/GENESIS_CHESS_ARCHITECTURE.md); the dependency-ordered plan is in [`docs/GENESIS_CHESS_SCOPE.md`](docs/GENESIS_CHESS_SCOPE.md).
+Yami is Genesis-native: the tactical, positional, and rising-action frame universes are authored Genesis rules; the deterministic renderer turns a PGN into clean event-sentences with zero neural judgment; brilliancy and cross-game learning run on Regenesis. Built and verified so far: the renderer, the three frame layers, the Scale-0 candidate seam, live recognition-to-move play, the System-1→System-2 play-and-learn loop, resemblance recall, ELO-stratified climbing, dual good-and-bad per-move learning, and a 19-master roster to learn from. Style routing and the frame library are the active build. The full architecture is in [`docs/GENESIS_CHESS_ARCHITECTURE.md`](docs/GENESIS_CHESS_ARCHITECTURE.md); the dependency-ordered plan is in [`docs/GENESIS_CHESS_SCOPE.md`](docs/GENESIS_CHESS_SCOPE.md).
 
 ---
 
