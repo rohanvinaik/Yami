@@ -24,12 +24,15 @@ import chess
 import chess.engine
 from regenesis.instrument import understand as rg_understand
 from yami.knowledge_graph import PLAN_TEMPLATES
-from yami.negative_learning import mine_negative_examples_from_evals
+from yami.navigator import compute_navigation_vector
+from yami.negative_learning import NegativeExample, mine_negative_examples_from_evals
 
 from learn_loop_v2 import SF, RiskOverlay, pick, sf_eval_after
 from play_navigate import recognized_plan, render_live
 
 _TEMPLATE = {t.plan_type.name: t for t in PLAN_TEMPLATES}
+GOOD_CP = 20            # a Yami move within 20cp of best = a GOOD move worth repeating (an exemplar)
+GOOD_REWARD = 100       # the reward magnitude a good move banks (mirror of a censor's eval_drop penalty)
 
 
 def recognized_template(board: chess.Board, us: str, them: str, us_white: bool):
@@ -42,43 +45,57 @@ def recognized_template(board: chess.Board, us: str, them: str, us_white: bool):
     return name, _TEMPLATE.get(name, _TEMPLATE["IMPROVE_PIECES"])
 
 
-def play(sf, limit, elo, us_white, overlay, max_plies):
-    """Recognition(System 1) → pick with overlay(System 2). Records (fen, uci, plan_name) per Yami move."""
+def play(sf, limit, elo, us_white, overlay, max_plies, reward=None):
+    """Recognition(System 1) → pick with the learned overlays(System 2): `overlay`=censors(bad), `reward`=
+    exemplars(good). Records (fen, uci, plan_name) per Yami move."""
     board = chess.Board()
     us, them = "Yami", "Opponent"
     us_color = chess.WHITE if us_white else chess.BLACK
-    moves, plies = [], 0
+    moves, san, plies, recalled = [], [], 0, 0
     while not board.is_game_over(claim_draw=True) and plies < max_plies:
         if board.turn == us_color:
             name, tpl = recognized_template(board, us, them, us_white)
-            mv = pick(board, elo, overlay, plan=tpl)
+            mv = pick(board, elo, overlay, plan=tpl, reward=reward)
+            if (overlay or reward) and mv is not None and mv != pick(board, elo, None, plan=tpl):
+                recalled += 1                       # a learned signal (censor or exemplar) CHANGED this move
             if mv:
                 moves.append((board.fen(), mv.uci(), name))
         else:
             mv = sf.play(board, limit).move
         if mv is None or mv not in board.legal_moves:
             break
+        san.append(board.san(mv))                   # capture the game so we can SEE what it played
         board.push(mv)
         plies += 1
     oc = board.outcome(claim_draw=True)
     won = "1-0" if us_white else "0-1"
     res = "draw" if not oc or oc.result() == "1/2-1/2" else "win" if oc.result() == won else "loss"
-    return {"result": res, "plies": plies, "us_white": us_white, "moves": moves}
+    return {"result": res, "plies": plies, "us_white": us_white, "moves": moves, "recalled": recalled, "san": san}
 
 
 def mine(sf, game):
-    """Score each Yami move (loser POV) → the disaster moves, carrying the plan Yami followed there."""
-    loser = chess.WHITE if game["us_white"] else chess.BLACK
+    """§13C — score EVERY Yami move (Yami POV) in ANY game → (BAD moves, GOOD moves), each with its plan.
+    BAD: cp_loss > 150 → censor. GOOD: cp_loss ≤ GOOD_CP (near-best) → exemplar. The mediocre middle is left
+    unlabelled (learn only from the clearly-good and clearly-bad). Every game — loss, draw, or win — teaches."""
+    yami = chess.WHITE if game["us_white"] else chess.BLACK
     fens, ucis, evb, eva, plans = [], [], [], [], []
     for fen, uci, name in game["moves"]:
         b = chess.Board(fen)
-        e0 = sf.analyse(b, chess.engine.Limit(depth=10))["score"].pov(loser).score(mate_score=10000)
+        e0 = sf.analyse(b, chess.engine.Limit(depth=10))["score"].pov(yami).score(mate_score=10000)
         b.push(chess.Move.from_uci(uci))
-        e1 = sf.analyse(b, chess.engine.Limit(depth=10))["score"].pov(loser).score(mate_score=10000)
+        e1 = sf.analyse(b, chess.engine.Limit(depth=10))["score"].pov(yami).score(mate_score=10000)
         fens.append(fen); ucis.append(uci); evb.append(e0); eva.append(e1); plans.append(name)
-    negs = mine_negative_examples_from_evals(fens, ucis, evb, eva, threshold_cp=150)
     plan_at = {(f, u): p for f, u, p in zip(fens, ucis, plans)}
-    return [(ne, plan_at.get((ne.fen, ne.move_uci), "IMPROVE_PIECES")) for ne in negs]
+    bad = [(ne, plan_at.get((ne.fen, ne.move_uci), "IMPROVE_PIECES"))
+           for ne in mine_negative_examples_from_evals(fens, ucis, evb, eva, threshold_cp=150)]
+    good = []
+    for fen, uci, e0, e1 in zip(fens, ucis, evb, eva):
+        if e0 - e1 <= GOOD_CP:                       # near-best (incl. improving moves, cp_loss < 0)
+            nav = compute_navigation_vector(chess.Board(fen))
+            ex = NegativeExample(fen=fen, move_uci=uci, nav_vector=nav.as_tuple(), position_type="",
+                                 eval_before=e0, eval_after=e1, eval_drop=GOOD_REWARD)   # banked reward magnitude
+            good.append((ex, plan_at.get((fen, uci), "IMPROVE_PIECES")))
+    return bad, good
 
 
 def main():
@@ -89,19 +106,23 @@ def main():
     sf.configure({"Threads": 2, "Skill Level": 0})
     limit = chess.engine.Limit(time=0.08)
 
-    overlay = RiskOverlay()
+    overlay, reward = RiskOverlay(), RiskOverlay()
     disasters = []
     for i in range(max_games):
-        g = play(sf, limit, elo, i % 2 == 0, overlay, max_plies)
-        print(f"game {i+1}: Yami {'W' if g['us_white'] else 'B'} · {g['plies']} plies · {g['result']}", flush=True)
-        if g["result"] == "loss":
-            for ne, plan in mine(sf, g):
-                overlay.learn(plan, elo, ne.move_uci, ne.nav_vector, ne.eval_drop)
-                disasters.append((ne.fen, plan, chess.WHITE if g["us_white"] else chess.BLACK))
+        g = play(sf, limit, elo, i % 2 == 0, overlay, max_plies, reward=reward)
+        bad, good = mine(sf, g)                      # §13C: EVERY game teaches, good + bad
+        for ne, plan in bad:
+            overlay.learn(plan, elo, ne.move_uci, ne.nav_vector, ne.eval_drop)
+            disasters.append((ne.fen, plan, chess.WHITE if g["us_white"] else chess.BLACK))
+        for ne, plan in good:
+            reward.learn(plan, elo, ne.move_uci, ne.nav_vector, ne.eval_drop)
+        print(f"game {i+1}: Yami {'W' if g['us_white'] else 'B'} · {g['plies']} plies · {g['result']} · "
+              f"+{len(bad)} censors +{len(good)} exemplars", flush=True)
         if len(disasters) >= 4:
             break
 
-    print(f"\nlearned {len(overlay.entries)} risk weights from {len(disasters)} disasters", flush=True)
+    print(f"\nlearned {len(overlay.entries)} censors + {len(reward.entries)} exemplars "
+          f"from {len(disasters)} disasters", flush=True)
     print("TARGETED — at each learned trap: does recognition+overlay re-prioritize to a SAFER move?", flush=True)
     changed = safer = 0
     for fen, plan, loser in disasters[:5]:

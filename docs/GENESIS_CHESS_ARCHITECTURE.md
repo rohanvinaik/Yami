@@ -474,6 +474,34 @@ BUILT & PROVEN** (`RiskOverlay` now recalls by graded hamming over the ternary n
 resemblance recall, regime SEPARATION proven — a 1320-trap silent at 1420). Not a strong player yet (0W-0D-4L @
 2 games/bracket) — the ascent to wins is SUSTAINED play, compute-bound. Next — run the climb off trickle-charge.*
 
+### 13C. Learn per-MOVE, not per-OUTCOME — every game teaches, good AND bad [DESIGN 2026-07-19]
+
+The v1 loop mined only LOSSES, and only for BAD moves (the near-miss censors). That threw away most of the
+signal — measured concretely: in a 90-ply DRAW, Yami played **~50% moves within 50cp of Stockfish's best**
+(median 50cp) alongside its blunders, and the loop learned **nothing** from it (draws don't mine). It also had
+no positive channel — so with the don't-lose floor complete, it could HOLD a game but had no idea what to *do*,
+and literally **shuffled a rook g1–h1–g1–h1 for a dozen moves** (a phase-1-complete / no-phase-2 draw, made
+visible). The fix (Rohan, 2026-07-19) generalises the axis:
+
+- **Mine by MOVE QUALITY, in EVERY game (loss / draw / win), from YAMI's own POV.** For each Yami move, the
+  exogenous judge gives `cp_loss = eval_before − eval_after`. Two labels, one un-labelled middle:
+  - **BAD** (`cp_loss > 150`) → a **negative censor** (`RiskOverlay`, the existing near-miss store) — *don't*.
+  - **GOOD** (`cp_loss ≤ 20`, near-best) → a **positive exemplar** (a mirror reward store) — *do it again here*.
+  - the mediocre middle is left unlabelled (learn only from the clearly-good and clearly-bad, not the noise).
+- **Both recalled by nav-vector RESEMBLANCE, ELO-stratified** (identical Kanerva machinery, §13B). Move
+  selection becomes `theory − bad_penalty + good_reward` (+ the safety rethink, gated on penalties only).
+- **This UNIFIES the biphasic curriculum** (Rohan): *bad*-move censoring is **phase 1 ("don't suck at each
+  ELO")**; *good*-move exemplaring is **phase 2 ("play what works")** — but they now run **together, per move,
+  every game**. A draw's 22 moves become 22 lessons. The positive channel is Yami's OWN good moves (grounded in
+  its Stockfish-scored experience, System 2's warrant), complementing the authored positive lens (`gm_patterns`
+  win-rate, the 19-style win-arcs, `navigate` outcome=+1). Goal is BETTER MOVE-MAKING; a resulting draw is a
+  fine outcome, not a failure.
+- **Phase transition & pruning (designed):** when fresh *non-redundant* lessons per game → 0 (the `+0`-lesson
+  draw is the hint; the real signal is losses producing only resemblance-redundant censors), that ELO regime is
+  saturated → **prune to the load-bearing censors/exemplars** (the §17 consolidation / Crick-Mitchison "dreaming"
+  — safe σ-preserving forgetting) and **promote to the next ELO bracket.** Pruning is the promotion step, not a
+  background chore.
+
 ## 14. The Regenesis-Native Architecture — low-compute chess *understanding* (the complete build)
 
 *This is the synthesis the whole document points at: how Yami reads a game as a story and articulates

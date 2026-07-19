@@ -61,6 +61,21 @@ class RiskOverlay:
                    for p, e, u, n, drop in self.entries if p == plan and e == elo and u == uci)
         return risk / 200.0                     # cp → rank-score units
 
+    def save(self, path: str) -> None:
+        """Persist the learned censor library — so learning ACCUMULATES across sessions (not per-run)."""
+        import json
+        json.dump([[p, e, u, list(n), d] for p, e, u, n, d in self.entries], open(path, "w"))
+
+    @classmethod
+    def load(cls, path: str) -> "RiskOverlay":
+        """Recall a persisted library (empty if none) — the experience Yami brings INTO the next games."""
+        import json
+        import os
+        o = cls()
+        if os.path.exists(path):
+            o.entries = [(p, e, u, tuple(n), d) for p, e, u, n, d in json.load(open(path))]
+        return o
+
 
 SAFETY_GAIN = 1.2   # how hard a triggered rethink pulls toward safety (0 = pure theory de-prioritization)
 
@@ -82,7 +97,7 @@ def _sat(x):
     return x / (x + 1.0)
 
 
-def rank_candidates(board, elo, overlay=None, plan=None):
+def rank_candidates(board, elo, overlay=None, plan=None, reward=None):
     """Theory rank (plan + gm win-rate) − learned risk penalty + a SAFETY term gated on rethink pressure.
 
     A: when this (plan, elo) regime carries a learned trap (max penalty > 0), route the reshuffle toward the
@@ -100,21 +115,26 @@ def rank_candidates(board, elo, overlay=None, plan=None):
     win = {s.move_uci: s.win_rate for s in _GM.query(board, nav, top_k=3) if s.games_seen >= 1}
 
     nav_t = nav.as_tuple()
-    pens = {r.scoped_move.move.uci(): (overlay.penalty(plan.plan_type.name, elo, r.scoped_move.move.uci(), nav_t)
+    pn = plan.plan_type.name
+    pens = {r.scoped_move.move.uci(): (overlay.penalty(pn, elo, r.scoped_move.move.uci(), nav_t)
                                        if overlay else 0.0) for r in ranked}
+    # POSITIVE channel (§13C): reward moves Yami played WELL in resembling contexts (its own good moves) —
+    # the mirror of the censor. `reward` is a RiskOverlay holding GOOD moves; same resemblance recall.
+    rews = {r.scoped_move.move.uci(): (reward.penalty(pn, elo, r.scoped_move.move.uci(), nav_t)
+                                       if reward else 0.0) for r in ranked}
     rethink = _sat(max(pens.values(), default=0.0))            # 0 when nothing learned here → theory leads
 
     def score(r):
         uci = r.scoped_move.move.uci()
         theory = win.get(uci, 0.0) * 1.0 + r.alignment * 0.2
         safety = SAFETY_GAIN * rethink * _see_safety(r.scoped_move.see_value)
-        return theory - pens[uci] + safety                     # SOFT de-prioritize the trap, safety leads the rethink
+        return theory - pens[uci] + rews[uci] + safety         # −bad ▸ +good ▸ safety leads the rethink
 
     return sorted(ranked, key=score, reverse=True), plan
 
 
-def pick(board, elo, overlay=None, plan=None):
-    ranked, _ = rank_candidates(board, elo, overlay, plan)
+def pick(board, elo, overlay=None, plan=None, reward=None):
+    ranked, _ = rank_candidates(board, elo, overlay, plan, reward)
     for r in ranked:
         if r.scoped_move.move in board.legal_moves:
             return r.scoped_move.move

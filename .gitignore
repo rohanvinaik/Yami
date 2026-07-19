@@ -23,3 +23,8 @@ build/
 data/*.jsonl
 *.db
 models/
+
+# Yami's LEARNED memory + game logs — runtime state that changes every game (kept local, not versioned)
+data/censors.json
+data/exemplars.json
+data/yami_games.pgn
