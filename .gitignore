@@ -28,3 +28,4 @@ models/
 data/censors.json
 data/exemplars.json
 data/yami_games.pgn
+data/naive_baseline.txt
