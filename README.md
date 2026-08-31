@@ -74,7 +74,7 @@ It also learns what *works*, not only what fails: every game scores each of Yami
 
 ## Brilliancy is surprise
 
-A brilliant move is one that violates the frame you were reading and turns out to be right — a belief you held, refuted, and revised. Yami reads that with Genesis's trace-boundary retraction (revived Python-native in [Regenesis](https://github.com/rohanvinaik/Regenesis), 12 tests): a naive read expects the material loss to be a mistake, the continuation refutes it, and the surprise of the revision *is* the brilliancy. It is the exchange sac seen as the carrots that were always meant to be blended.
+A brilliant move is one that violates the frame you were reading and turns out to be right — a belief you held, refuted, and revised. Yami reads that with Genesis's trace-boundary retraction (revived Python-native in Regenesis, 12 tests): a naive read expects the material loss to be a mistake, the continuation refutes it, and the surprise of the revision *is* the brilliancy. It is the exchange sac seen as the carrots that were always meant to be blended.
 
 ## Lineage and status
 
@@ -82,4 +82,4 @@ Yami is Genesis-native: the tactical, positional, and rising-action frame univer
 
 ---
 
-MIT — Rohan Vinaik. A chess game is a story; Yami reads it on [Genesis](https://github.com/rohanvinaik/Regenesis).
+MIT — Rohan Vinaik. A chess game is a story; Yami reads it on Genesis.
